@@ -989,219 +989,216 @@
     </div>
     <div class="footer" id="footer"></div>
   </div>
-  <script>
-    const DISCORD_ID = "707887497153216562";
-    const COUNTER_KEY = "suka-bio-" + DISCORD_ID;
-    const BADGE_MAP = [
-      { flag: 1 << 0,  file: "staff.svg", name: "Discord Staff" },
-      { flag: 1 << 1,  file: "partnered_server_owner.svg", name: "Partnered Server Owner" },
-      { flag: 1 << 2,  file: "hypesquad_events.svg", name: "HypeSquad Events" },
-      { flag: 1 << 3,  file: "bug_hunter_level_1.svg", name: "Bug Hunter Level 1" },
-      { flag: 1 << 6,  file: "hypesquad_bravery.svg", name: "HypeSquad Bravery" },
-      { flag: 1 << 7,  file: "hypesquad_brilliance.svg", name: "HypeSquad Brilliance" },
-      { flag: 1 << 8,  file: "hypesquad_balance.svg", name: "HypeSquad Balance" },
-      { flag: 1 << 9,  file: "early_supporter.svg", name: "Early Supporter" },
-      { flag: 1 << 14, file: "bug_hunter_level_2.svg", name: "Bug Hunter Level 2" },
-      { flag: 1 << 17, file: "early_verified_developer.svg", name: "Early Verified Bot Developer" },
-      { flag: 1 << 18, file: "certified_moderator.svg", name: "Moderator Programs Alumni" },
-      { flag: 1 << 22, file: "active_developer.svg", name: "Active Developer" },
-    ];
-    const BADGE_CDN = "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
-    const BASE_URL = "https://suka.rest";
-    function getBadges(publicFlags) {
-      return BADGE_MAP.filter(b => (publicFlags & b.flag) === b.flag);
+ <script>
+  const DISCORD_ID = "707887497153216562";
+  const COUNTER_KEY = "suka-bio-" + DISCORD_ID;
+  const BADGE_MAP = [
+    { flag: 1 << 0,  file: "staff.svg", name: "Discord Staff" },
+    { flag: 1 << 1,  file: "partnered_server_owner.svg", name: "Partnered Server Owner" },
+    { flag: 1 << 2,  file: "hypesquad_events.svg", name: "HypeSquad Events" },
+    { flag: 1 << 3,  file: "bug_hunter_level_1.svg", name: "Bug Hunter Level 1" },
+    { flag: 1 << 6,  file: "hypesquad_bravery.svg", name: "HypeSquad Bravery" },
+    { flag: 1 << 7,  file: "hypesquad_brilliance.svg", name: "HypeSquad Brilliance" },
+    { flag: 1 << 8,  file: "hypesquad_balance.svg", name: "HypeSquad Balance" },
+    { flag: 1 << 9,  file: "early_supporter.svg", name: "Early Supporter" },
+    { flag: 1 << 14, file: "bug_hunter_level_2.svg", name: "Bug Hunter Level 2" },
+    { flag: 1 << 17, file: "early_verified_developer.svg", name: "Early Verified Bot Developer" },
+    { flag: 1 << 18, file: "certified_moderator.svg", name: "Moderator Programs Alumni" },
+    { flag: 1 << 22, file: "active_developer.svg", name: "Active Developer" },
+  ];
+  const BADGE_CDN = "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
+  const BASE_URL = "https://suka.rest";
+  function getBadges(publicFlags) {
+    return BADGE_MAP.filter(b => (publicFlags & b.flag) === b.flag);
+  }
+  function avatarUrl(user) {
+    if (!user.avatar) {
+      const idx = user.discriminator === "0"
+        ? Number((BigInt(user.id) >> 22n) % 6n)
+        : parseInt(user.discriminator) % 5;
+      return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
     }
-    function avatarUrl(user) {
-      if (!user.avatar) {
-        const idx = user.discriminator === "0"
-          ? Number((BigInt(user.id) >> 22n) % 6n)
-          : parseInt(user.discriminator) % 5;
-        return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
+    const ext = user.avatar.startsWith("a_") ? "gif" : "png";
+    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
+  }
+  function getDominantColor(img) {
+    try {
+      const canvas = document.createElement("canvas");
+      const size = 40;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (brightness < 25 || brightness > 230) continue;
+        r += data[i];
+        g += data[i + 1];
+        b += data[i + 2];
+        count++;
       }
-      const ext = user.avatar.startsWith("a_") ? "gif" : "png";
-      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
-    }
-    function getDominantColor(img) {
-      try {
-        const canvas = document.createElement("canvas");
-        const size = 40;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, size, size);
-        const data = ctx.getImageData(0, 0, size, size).data;
-        let r = 0, g = 0, b = 0, count = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          if (brightness < 25 || brightness > 230) continue;
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-          count++;
-        }
-        if (count === 0) return { r: 20, g: 20, b: 24 };
-        r = Math.round(r / count);
-        g = Math.round(g / count);
-        b = Math.round(b / count);
-        return {
-          r: Math.round(r * 0.35),
-          g: Math.round(g * 0.35),
-          b: Math.round(b * 0.35)
-        };
-      } catch {
-        return { r: 20, g: 20, b: 24 };
-      }
-    }
-    function applyTheme(color) {
-      const { r, g, b } = color;
-      const cardBg = `rgb(${Math.min(255, r + 28)}, ${Math.min(255, g + 28)}, ${Math.min(255, b + 28)})`;
-      const darker = `rgb(${r}, ${g}, ${b})`;
-      const bodyBg = `rgb(${Math.max(0, r - 12)}, ${Math.max(0, g - 12)}, ${Math.max(0, b - 12)})`;
-      document.body.style.background = bodyBg;
-      document.getElementById("card").style.background = cardBg;
-      document.querySelectorAll(".avatar, .status-dot").forEach(el => {
-        el.style.borderColor = cardBg;
-      });
-      document.querySelectorAll(".bio-box, .link-icon").forEach(el => {
-        el.style.background = darker;
-      });
-    }
-    async function loadViews() {
-      try {
-        const res = await fetch(BASE_URL + "/api/v1/hit/" + COUNTER_KEY);
-        const data = await res.json();
-        const value = data.value ?? data.count ?? 0;
-        document.getElementById("view-count").textContent = Number(value).toLocaleString();
-      } catch {
-        document.getElementById("view-count").textContent = "–";
-      }
-    }
-    function render(data) {
-      const user = data.discord_user;
-      const status = data.discord_status || "offline";
-      const url = avatarUrl(user);
-      const avatar = document.getElementById("avatar");
-      avatar.onload = () => {
-        applyTheme(getDominantColor(avatar));
+      if (count === 0) return { r: 20, g: 20, b: 24 };
+      r = Math.round(r / count);
+      g = Math.round(g / count);
+      b = Math.round(b / count);
+      return {
+        r: Math.round(r * 0.35),
+        g: Math.round(g * 0.35),
+        b: Math.round(b * 0.35)
       };
-      avatar.src = url;
-      document.getElementById("username").textContent = user.global_name || user.username;
-      document.getElementById("handle").textContent = `@${user.username}`;
-      const statusEl = document.getElementById("status");
-      statusEl.className = "status-dot " + status;
-      const badgesEl = document.getElementById("badges");
-      badgesEl.innerHTML = "";
-      getBadges(user.public_flags || 0).forEach(b => {
-        const img = document.createElement("img");
-        img.src = BADGE_CDN + b.file;
-        img.alt = b.name;
-        img.title = b.name;
-        img.className = "badge";
-        badgesEl.appendChild(img);
-      });
-      document.getElementById("bio").textContent = BIO_TEXT;
-      document.getElementById("footer").textContent = "";
+    } catch {
+      return { r: 20, g: 20, b: 24 };
     }
-    function showError() {
-      document.getElementById("username").textContent = "Unavailable";
-      document.getElementById("handle").textContent = "";
-      document.getElementById("badges").innerHTML = "";
-      document.getElementById("footer").textContent = "";
+  }
+  function applyTheme(color) {
+    const { r, g, b } = color;
+    const cardBg = `rgb(${Math.min(255, r + 28)}, ${Math.min(255, g + 28)}, ${Math.min(255, b + 28)})`;
+    const darker = `rgb(${r}, ${g}, ${b})`;
+    const bodyBg = `rgb(${Math.max(0, r - 12)}, ${Math.max(0, g - 12)}, ${Math.max(0, b - 12)})`;
+    document.body.style.background = bodyBg;
+    document.getElementById("card").style.background = cardBg;
+    document.querySelectorAll(".avatar, .status-dot").forEach(el => {
+      el.style.borderColor = cardBg;
+    });
+    document.querySelectorAll(".bio-box, .link-icon").forEach(el => {
+      el.style.background = darker;
+    });
+  }
+  async function loadViews() {
+    try {
+      const res = await fetch(BASE_URL + "/api/v1/hit/" + COUNTER_KEY);
+      const data = await res.json();
+      const value = data.value ?? data.count ?? 0;
+      document.getElementById("view-count").textContent = Number(value).toLocaleString();
+    } catch {
+      document.getElementById("view-count").textContent = "–";
     }
-    async function fetchPresence() {
-      try {
-        const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
-        const json = await res.json();
-        if (!json.success) {
-          showError();
-          return;
-        }
-        render(json.data);
-      } catch {
+  }
+  function render(data) {
+    const user = data.discord_user;
+    const status = data.discord_status || "offline";
+    const url = avatarUrl(user);
+    const avatar = document.getElementById("avatar");
+    avatar.onload = () => applyTheme(getDominantColor(avatar));
+    avatar.src = url;
+    document.getElementById("username").textContent = user.global_name || user.username;
+    document.getElementById("handle").textContent = `@${user.username}`;
+    const statusEl = document.getElementById("status");
+    statusEl.className = "status-dot " + status;
+    const badgesEl = document.getElementById("badges");
+    badgesEl.innerHTML = "";
+    getBadges(user.public_flags || 0).forEach(b => {
+      const img = document.createElement("img");
+      img.src = BADGE_CDN + b.file;
+      img.alt = b.name;
+      img.title = b.name;
+      img.className = "badge";
+      badgesEl.appendChild(img);
+    });
+    document.getElementById("bio").textContent = BIO_TEXT;
+    document.getElementById("footer").textContent = "";
+  }
+  function showError() {
+    document.getElementById("username").textContent = "Unavailable";
+    document.getElementById("handle").textContent = "";
+    document.getElementById("badges").innerHTML = "";
+    document.getElementById("footer").textContent = "";
+  }
+  async function fetchPresence() {
+    try {
+      const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
+      const json = await res.json();
+      if (!json.success) {
         showError();
+        return;
       }
+      render(json.data);
+    } catch {
+      showError();
     }
-    function getAudioFromGitHub(fileName) {
-      const mediaUrl = `${BASE_URL}/raw/gh/badcode/biotheme@main/${fileName}`;
-      return { src: mediaUrl, title: fileName };
-    }
-    async function initMusic() {
-      try {
-        const mp3Path = window.location.pathname;
-        let mp3File = mp3Path ? mp3Path.split('/').pop().replace(/\?.*$/, '') : null;
-        if (!mp3File || mp3File === 'index.html') {
-          mp3File = 'suka.mp3';
-        }
-        if (!/\.mp3$/i.test(mp3File)) {
-          mp3File = `${mp3File}.mp3`;
-        }
-        const audio = new Audio(getAudioFromGitHub(mp3File).src);
-        audio.loop = true;
-        audio.volume = 0.55;
-        const playButton = document.createElement('button');
-        playButton.style.position = 'fixed';
-        playButton.style.bottom = '20px';
-        playButton.style.right = '20px';
-        playButton.style.width = '52px';
-        playButton.style.height = '52px';
-        playButton.style.borderRadius = '50%';
-        playButton.style.background = 'rgba(255,255,255,0.12)';
-        playButton.style.border = '1px solid rgba(255,255,255,0.3)';
-        playButton.style.color = '#fff';
-        playButton.style.fontSize = '22px';
-        playButton.style.display = 'flex';
-        playButton.style.alignItems = 'center';
-        playButton.style.justifyContent = 'center';
-        playButton.style.zIndex = '9999';
-        playButton.textContent = '♪';
-        document.body.appendChild(playButton);
-        const pauseButton = document.createElement('button');
-        pauseButton.style.position = 'fixed';
-        pauseButton.style.bottom = '84px';
-        pauseButton.style.right = '20px';
-        pauseButton.style.width = '52px';
-        pauseButton.style.height = '52px';
-        pauseButton.style.borderRadius = '50%';
-        pauseButton.style.background = 'rgba(255,255,255,0.12)';
-        pauseButton.style.border = '1px solid rgba(255,255,255,0.3)';
-        pauseButton.style.color = '#fff';
-        pauseButton.style.fontSize = '22px';
-        pauseButton.style.display = 'flex';
-        pauseButton.style.alignItems = 'center';
-        pauseButton.style.justifyContent = 'center';
-        pauseButton.style.zIndex = '9999';
-        pauseButton.textContent = '⏸';
-        document.body.appendChild(pauseButton);
-        const togglePlay = () => {
-          if (audio.paused) {
-            audio.play().catch(() => {});
-            playButton.textContent = '⏸';
-            pauseButton.style.display = 'flex';
-          } else {
-            audio.pause();
-            playButton.textContent = '♪';
-            pauseButton.style.display = 'none';
-          }
-        };
-        playButton.addEventListener('click', togglePlay);
-        pauseButton.addEventListener('click', togglePlay);
-        audio.addEventListener('canplaythrough', () => {
-          if (audio.paused) {
-            playButton.textContent = '♪';
-            pauseButton.style.display = 'none';
-          }
-        });
-        audio.addEventListener('error', () => {
-          document.body.removeChild(playButton);
-          document.body.removeChild(pauseButton);
-        });
-      } catch (e) {
+  }
+  function getAudioFromGitHub(fileName) {
+    const mediaUrl = `${BASE_URL}/raw/gh/badcode/biotheme@main/${fileName}`;
+    return { src: mediaUrl, title: fileName };
+  }
+  async function initMusic() {
+    try {
+      const mp3Path = window.location.pathname;
+      let mp3File = mp3Path ? mp3Path.split('/').pop().replace(/\?.*$/, '') : null;
+      if (!mp3File || mp3File === 'index.html') {
+        mp3File = 'suka.mp3';
       }
+      if (!/\.mp3$/i.test(mp3File)) {
+        mp3File = `${mp3File}.mp3`;
+      }
+      const audio = new Audio(getAudioFromGitHub(mp3File).src);
+      audio.loop = true;
+      audio.volume = 0.55;
+      const playButton = document.createElement('button');
+      playButton.style.position = 'fixed';
+      playButton.style.bottom = '20px';
+      playButton.style.right = '20px';
+      playButton.style.width = '52px';
+      playButton.style.height = '52px';
+      playButton.style.borderRadius = '50%';
+      playButton.style.background = 'rgba(255,255,255,0.12)';
+      playButton.style.border = '1px solid rgba(255,255,255,0.3)';
+      playButton.style.color = '#fff';
+      playButton.style.fontSize = '22px';
+      playButton.style.display = 'flex';
+      playButton.style.alignItems = 'center';
+      playButton.style.justifyContent = 'center';
+      playButton.style.zIndex = '9999';
+      playButton.textContent = '♪';
+      document.body.appendChild(playButton);
+      const pauseButton = document.createElement('button');
+      pauseButton.style.position = 'fixed';
+      pauseButton.style.bottom = '84px';
+      pauseButton.style.right = '20px';
+      pauseButton.style.width = '52px';
+      pauseButton.style.height = '52px';
+      pauseButton.style.borderRadius = '50%';
+      pauseButton.style.background = 'rgba(255,255,255,0.12)';
+      pauseButton.style.border = '1px solid rgba(255,255,255,0.3)';
+      pauseButton.style.color = '#fff';
+      pauseButton.style.fontSize = '22px';
+      pauseButton.style.display = 'flex';
+      pauseButton.style.alignItems = 'center';
+      pauseButton.style.justifyContent = 'center';
+      pauseButton.style.zIndex = '9999';
+      pauseButton.textContent = '⏸';
+      document.body.appendChild(pauseButton);
+      const togglePlay = () => {
+        if (audio.paused) {
+          audio.play().catch(() => {});
+          playButton.textContent = '⏸';
+          pauseButton.style.display = 'flex';
+        } else {
+          audio.pause();
+          playButton.textContent = '♪';
+          pauseButton.style.display = 'none';
+        }
+      };
+      playButton.addEventListener('click', togglePlay);
+      pauseButton.addEventListener('click', togglePlay);
+      audio.addEventListener('canplaythrough', () => {
+        if (audio.paused) {
+          playButton.textContent = '♪';
+          pauseButton.style.display = 'none';
+        }
+      });
+      audio.addEventListener('error', () => {
+        document.body.removeChild(playButton);
+        document.body.removeChild(pauseButton);
+      });
+    } catch (e) {
     }
-    loadViews();
-    fetchPresence();
-    setInterval(fetchPresence, 30000);
-    window.addEventListener('load', initMusic);
-  </script>
+  }
+  loadViews();
+  fetchPresence();
+  setInterval(fetchPresence, 30000);
+  window.addEventListener('load', initMusic);
+</script>
 </body>
-</html>
