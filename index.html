@@ -186,7 +186,7 @@
   <div id="snow">
     <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
     <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
-    <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
+    <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
     <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
     <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
     <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
@@ -244,12 +244,6 @@
       { flag: 1 << 22, file: "active_developer.svg", name: "Active Developer" },
     ];
     const BADGE_CDN = "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
-    const FRIEND_DCS = [
-      "583244541113532416",
-      "1538289285327888518",
-      "1467259512829382950",
-      "1436799551599018066"
-    ];
     function getBadges(publicFlags) {
       return BADGE_MAP.filter(b => (publicFlags & b.flag) === b.flag);
     }
@@ -441,7 +435,7 @@
       document.getElementById("footer").textContent = "";
       const card = document.getElementById("friends-card");
       card.innerHTML = "";
-      for (const dc of FRIEND_DCS) {
+      for (const dc of ["583244541113532416","1538289285327888518","1467259512829382950","1436799551599018066"]) {
         try {
           const res = await fetch(`https://api.lanyard.rest/v1/users/${dc}`);
           if (!res.ok) continue;
