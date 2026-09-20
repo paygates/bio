@@ -757,6 +757,22 @@
       width: 96px;
       height: 96px;
       margin: 0 auto 18px;
+      cursor: pointer;
+    }
+    .avatar-wrap:hover .avatar {
+      filter: brightness(0.85);
+    }
+    .avatar-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+      transition: box-shadow 0.2s ease;
+      pointer-events: none;
+    }
+    .avatar-wrap:hover::after {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
     }
     .avatar {
       width: 96px;
@@ -766,7 +782,7 @@
       border: 4px solid #2b2d31;
       background: #1e1f22;
       display: block;
-      transition: border-color 0.6s ease;
+      transition: border-color 0.6s ease, filter 0.2s ease;
     }
     .status-dot {
       position: absolute;
@@ -884,6 +900,131 @@
       font-size: 0.75rem;
       color: #6d6f78;
     }
+
+    .friends-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .friends-overlay.open {
+      display: flex;
+      opacity: 1;
+    }
+    .friends-modal {
+      background: #2b2d31;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.2s ease;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    }
+    .friends-overlay.open .friends-modal {
+      transform: translateY(0) scale(1);
+    }
+    .friends-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .friends-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .friends-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: #1e1f22;
+      color: #dbdee1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .friends-close:hover {
+      background: #fff;
+      color: #000;
+    }
+    .friends-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1e1f22;
+      border-radius: 10px;
+      padding: 10px 12px;
+      transition: background 0.15s ease;
+    }
+    .friend-item:hover {
+      background: #232428;
+    }
+    .friend-avatar-wrap {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .friend-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #2b2d31;
+      display: block;
+    }
+    .friend-status-dot {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 3px solid #1e1f22;
+      background: #747f8d;
+    }
+    .friend-status-dot.online { background: #23a559; }
+    .friend-status-dot.idle   { background: #f0b232; }
+    .friend-status-dot.dnd    { background: #f23f43; }
+    .friend-status-dot.offline{ background: #747f8d; }
+    .friend-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .friend-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .friend-status-text {
+      font-size: 0.78rem;
+      color: #949ba4;
+      text-transform: capitalize;
+    }
   </style>
 </head>
 <body>
@@ -979,7 +1120,7 @@
       <svg id="audio-icon" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
     </button>
     <audio id="bg-audio" src="https://raw.githubusercontent.com/paygates/bio/fe846f8cad16064f2c7c6b55f9d6764ed5350bef/suka.mp3" loop preload="auto"></audio>
-    <div class="avatar-wrap">
+    <div class="avatar-wrap" id="avatar-wrap" title="See friends">
       <img class="avatar" id="avatar" src="" alt="Avatar" crossorigin="anonymous" />
       <div class="status-dot offline" id="status"></div>
     </div>
@@ -998,9 +1139,28 @@
     </div>
     <div class="footer" id="footer"></div>
   </div>
+
+  <div class="friends-overlay" id="friends-overlay">
+    <div class="friends-modal" id="friends-modal">
+      <div class="friends-header">
+        <div class="friends-title">Friends</div>
+        <button class="friends-close" id="friends-close" aria-label="Close">✕</button>
+      </div>
+      <div class="friends-list" id="friends-list">
+        <div style="color:#949ba4; font-size:0.85rem; text-align:center; padding:12px 0;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const DISCORD_ID = "707887497153216562";
     const BIO_TEXT = "I'm just someone who bypassed stripe payment_intent.";
+    const FRIEND_IDS = [
+      "583244541113532416",
+      "1538289285327888518",
+      "1467259512829382950",
+      "1436799551599018066"
+    ];
 
     const PROFILE_PROXY_URL = "";
     const COUNTER_KEY = "suka-bio-" + DISCORD_ID;
@@ -1032,7 +1192,7 @@
         return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
       }
       const ext = user.avatar.startsWith("a_") ? "gif" : "png";
-      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
+      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
     }
 
     function themeFromProfile(user) {
@@ -1251,6 +1411,98 @@
         showError();
       }
     }
+
+    let friendsLoaded = false;
+
+    function friendStatusLabel(status) {
+      switch (status) {
+        case "online": return "Online";
+        case "idle": return "Idle";
+        case "dnd": return "Do Not Disturb";
+        default: return "Offline";
+      }
+    }
+
+    function renderFriendsList(entries) {
+      const listEl = document.getElementById("friends-list");
+      listEl.innerHTML = "";
+
+      entries.forEach(({ id, data }) => {
+        const item = document.createElement("div");
+        item.className = "friend-item";
+
+        if (!data) {
+          item.innerHTML = `
+            <div class="friend-avatar-wrap">
+              <div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;color:#6d6f78;font-size:0.7rem;">?</div>
+            </div>
+            <div class="friend-info">
+              <div class="friend-name">Unavailable</div>
+              <div class="friend-status-text">ID ${id}</div>
+            </div>
+          `;
+          listEl.appendChild(item);
+          return;
+        }
+
+        const user = data.discord_user;
+        const status = data.discord_status || "offline";
+        const displayName = user.global_name || user.username;
+        const url = avatarUrl(user);
+
+        item.innerHTML = `
+          <div class="friend-avatar-wrap">
+            <img class="friend-avatar" src="${url}" alt="${displayName}" />
+            <div class="friend-status-dot ${status}"></div>
+          </div>
+          <div class="friend-info">
+            <div class="friend-name">${displayName}</div>
+            <div class="friend-status-text">${friendStatusLabel(status)}</div>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    async function loadFriends() {
+      if (friendsLoaded) return;
+      friendsLoaded = true;
+
+      const results = await Promise.all(
+        FRIEND_IDS.map(async id => {
+          try {
+            const res = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
+            const json = await res.json();
+            return { id, data: json.success ? json.data : null };
+          } catch {
+            return { id, data: null };
+          }
+        })
+      );
+
+      renderFriendsList(results);
+    }
+
+    function openFriendsModal() {
+      document.getElementById("friends-overlay").classList.add("open");
+      loadFriends();
+    }
+
+    function closeFriendsModal() {
+      document.getElementById("friends-overlay").classList.remove("open");
+    }
+
+    document.getElementById("avatar-wrap").addEventListener("click", e => {
+      e.stopPropagation();
+      openFriendsModal();
+    });
+    document.getElementById("friends-close").addEventListener("click", closeFriendsModal);
+    document.getElementById("friends-overlay").addEventListener("click", e => {
+      if (e.target.id === "friends-overlay") closeFriendsModal();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeFriendsModal();
+    });
 
     loadViews();
     initAudio();
