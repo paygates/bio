@@ -8,7 +8,7 @@
   <meta property="og:title" content="@paygates">
   <meta property="og:description" content="I'm just someone who bypassed stripe payment_intent.">
   <meta property="og:url" content="https://suka.rest/">
-  <meta property="og:image" content="https://cdn.discordapp.com/embed/avatars/3.png ">
+  <meta property="og:image" content="https://i.pinimg.com/736x/c7/bb/4e/c7bb4ef758b0c1b1a378a68083c2daeb.jpg ">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -582,6 +582,8 @@
     let hasIntroed = false;
     let friendsLoaded = false;
 
+    let themeLocked = false;
+
     function createSnow() {
       const snow = document.getElementById("snow");
 
@@ -683,11 +685,7 @@
         }
 
         if (!count) {
-          return {
-            r: 20,
-            g: 20,
-            b: 24
-          };
+          return null;
         }
 
         r = Math.round(r / count);
@@ -700,11 +698,7 @@
           b: Math.round(b * .35)
         };
       } catch {
-        return {
-          r: 20,
-          g: 20,
-          b: 24
-        };
+        return null;
       }
     }
 
@@ -761,6 +755,8 @@
       document.querySelectorAll(".friend-avatar").forEach(el => {
         el.style.background = cardBg;
       });
+
+      themeLocked = true;
     }
 
     function typeText(el, text, speed) {
@@ -850,14 +846,25 @@
       const url = avatarUrl(user);
       const avatar = document.getElementById("avatar");
 
-      const profileTheme = themeFromProfile(user);
+      if (!themeLocked) {
+        const profileTheme = themeFromProfile(user);
 
-      if (profileTheme) {
-        applyTheme(profileTheme);
-      } else {
-        avatar.onload = () => {
-          applyTheme(getDominantColor(avatar));
-        };
+        if (profileTheme) {
+          applyTheme(profileTheme);
+        } else {
+          avatar.onload = () => {
+            if (themeLocked) return;
+
+            const dominant = getDominantColor(avatar);
+
+            applyTheme(dominant || { r: 20, g: 20, b: 24 });
+          };
+
+          avatar.onerror = () => {
+            if (themeLocked) return;
+            applyTheme({ r: 20, g: 20, b: 24 });
+          };
+        }
       }
 
       avatar.src = url;
