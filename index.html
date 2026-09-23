@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>suka.rest - About me</title>
 
-  <meta property="og:type" content="personal profile">
+  <meta property="og:type" content="profile">
   <meta property="og:title" content="@paygates">
   <meta property="og:description" content="I'm just someone who bypassed stripe payment_intent.">
   <meta property="og:url" content="https://suka.rest/">
@@ -17,10 +17,15 @@
 
   <style>
     :root {
-      --accent: 255, 255, 255;
+      --accent: 255,255,255;
+      --accent-soft: rgba(255,255,255,.18);
+      --accent-glow: rgba(255,255,255,.45);
       --card: #2b2d31;
       --dark: #1e1f22;
       --bg: #080808;
+      --rotate-x: 0deg;
+      --rotate-y: 0deg;
+      --card-scale: 1;
     }
 
     * {
@@ -37,13 +42,13 @@
     body {
       min-height: 100vh;
       background:
-        radial-gradient(circle at 50% 50%, rgba(var(--accent), .07), transparent 35%),
-        radial-gradient(circle at 10% 20%, rgba(var(--accent), .04), transparent 30%),
+        radial-gradient(circle at 50% 50%, rgba(var(--accent),.07), transparent 35%),
+        radial-gradient(circle at 10% 20%, rgba(var(--accent),.04), transparent 30%),
         var(--bg);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: "Inter", system-ui, sans-serif;
+      font-family: "Inter",system-ui,-apple-system,sans-serif;
       color: #fff;
       padding: 24px;
       overflow: hidden;
@@ -56,11 +61,12 @@
       width: 700px;
       height: 700px;
       border-radius: 50%;
-      background: radial-gradient(
-        circle,
-        rgba(var(--accent), .11),
-        transparent 65%
-      );
+      background:
+        radial-gradient(
+          circle,
+          rgba(var(--accent),.11),
+          transparent 65%
+        );
       filter: blur(70px);
       pointer-events: none;
       animation: ambientMove 12s ease-in-out infinite alternate;
@@ -86,15 +92,13 @@
 
     @keyframes ambientMove {
       0% {
-        transform: translate(-25vw, -15vh) scale(.8);
+        transform: translate(-25vw,-15vh) scale(.8);
       }
-
       50% {
-        transform: translate(20vw, 10vh) scale(1.2);
+        transform: translate(20vw,10vh) scale(1.2);
       }
-
       100% {
-        transform: translate(-5vw, 25vh) scale(.9);
+        transform: translate(-5vw,25vh) scale(.9);
       }
     }
 
@@ -102,7 +106,6 @@
       0% {
         background-position: 200% 0;
       }
-
       100% {
         background-position: -200% 100%;
       }
@@ -123,7 +126,7 @@
       background: rgba(255,255,255,.75);
       box-shadow:
         0 0 8px rgba(255,255,255,.5),
-        0 0 18px rgba(var(--accent), .3);
+        0 0 18px rgba(var(--accent),.3);
       animation: fall linear infinite;
     }
 
@@ -132,16 +135,13 @@
         transform: translate3d(0,-50px,0) scale(0);
         opacity: 0;
       }
-
       5% {
         opacity: .8;
         transform: translate3d(0,-30px,0) scale(1);
       }
-
       50% {
         transform: translate3d(30px,50vh,0) scale(1);
       }
-
       100% {
         transform: translate3d(-30px,110vh,0) scale(.2);
         opacity: 0;
@@ -166,17 +166,29 @@
       box-shadow:
         0 30px 80px rgba(0,0,0,.65),
         0 0 0 1px rgba(255,255,255,.025),
-        0 0 45px rgba(var(--accent), .08);
+        0 0 45px rgba(var(--accent),.08);
       backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       transform-style: preserve-3d;
+      transform:
+        perspective(900px)
+        rotateX(var(--rotate-x))
+        rotateY(var(--rotate-y))
+        scale(var(--card-scale));
       will-change: transform;
-      animation:
-        cardEnter .9s cubic-bezier(.16,1,.3,1) both,
-        cardFloat 7s ease-in-out 1s infinite;
+      animation: cardEnter .9s cubic-bezier(.16,1,.3,1) both;
       transition:
         background .8s ease,
         box-shadow .5s ease,
-        border-color .5s ease;
+        border-color .5s ease,
+        transform .12s ease-out;
+    }
+
+    .card:hover {
+      box-shadow:
+        0 35px 95px rgba(0,0,0,.72),
+        0 0 0 1px rgba(255,255,255,.035),
+        0 0 60px rgba(var(--accent),.14);
     }
 
     .card::before {
@@ -189,7 +201,7 @@
         linear-gradient(
           120deg,
           transparent 15%,
-          rgba(var(--accent), .5),
+          rgba(var(--accent),.5),
           transparent 45%,
           transparent 70%,
           rgba(255,255,255,.15)
@@ -212,7 +224,7 @@
       background:
         radial-gradient(
           circle at 50% 0%,
-          rgba(var(--accent), .12),
+          rgba(var(--accent),.12),
           transparent 38%
         );
       pointer-events: none;
@@ -226,24 +238,23 @@
     @keyframes cardEnter {
       from {
         opacity: 0;
-        transform: translateY(35px) scale(.94) rotateX(5deg);
         filter: blur(10px);
+        transform:
+          perspective(900px)
+          rotateX(5deg)
+          rotateY(0deg)
+          translateY(35px)
+          scale(.94);
       }
-
       to {
         opacity: 1;
-        transform: translateY(0) scale(1) rotateX(0);
         filter: blur(0);
-      }
-    }
-
-    @keyframes cardFloat {
-      0%,100% {
-        margin-top: 0;
-      }
-
-      50% {
-        margin-top: -5px;
+        transform:
+          perspective(900px)
+          rotateX(0deg)
+          rotateY(0deg)
+          translateY(0)
+          scale(1);
       }
     }
 
@@ -251,11 +262,9 @@
       0% {
         background-position: 0% 50%;
       }
-
       50% {
         background-position: 100% 50%;
       }
-
       100% {
         background-position: 0% 50%;
       }
@@ -277,14 +286,15 @@
       padding: 5px 10px;
       border-radius: 20px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 0 15px rgba(var(--accent), .05);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 0 15px rgba(var(--accent),.05);
       transition: .3s ease;
     }
 
     .views:hover {
       color: #fff;
       transform: translateY(-2px);
-      box-shadow: 0 0 20px rgba(var(--accent), .2);
+      box-shadow: 0 0 20px rgba(var(--accent),.2);
     }
 
     .views svg {
@@ -300,7 +310,7 @@
 
     @keyframes countPulse {
       50% {
-        text-shadow: 0 0 12px rgba(var(--accent), .7);
+        text-shadow: 0 0 12px rgba(var(--accent),.7);
       }
     }
 
@@ -319,13 +329,14 @@
       justify-content: center;
       cursor: pointer;
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       transition: .3s ease;
     }
 
     .audio-toggle:hover {
       color: #fff;
       transform: rotate(12deg) scale(1.12);
-      box-shadow: 0 0 20px rgba(var(--accent), .35);
+      box-shadow: 0 0 20px rgba(var(--accent),.35);
     }
 
     .audio-toggle:not(.muted) {
@@ -335,8 +346,8 @@
     @keyframes audioPulse {
       50% {
         box-shadow:
-          0 0 0 5px rgba(var(--accent), .04),
-          0 0 22px rgba(var(--accent), .25);
+          0 0 0 5px rgba(var(--accent),.04),
+          0 0 22px rgba(var(--accent),.25);
       }
     }
 
@@ -367,7 +378,7 @@
         conic-gradient(
           from 0deg,
           transparent,
-          rgba(var(--accent), .9),
+          rgba(var(--accent),.9),
           transparent 30%,
           rgba(255,255,255,.4),
           transparent 70%
@@ -375,7 +386,7 @@
       animation: avatarRing 4s linear infinite;
       filter:
         blur(1px)
-        drop-shadow(0 0 8px rgba(var(--accent), .45));
+        drop-shadow(0 0 8px rgba(var(--accent),.45));
     }
 
     .avatar-wrap::after {
@@ -412,7 +423,7 @@
     .avatar-wrap:hover .avatar {
       transform: scale(1.06);
       filter: brightness(1.08) saturate(1.15);
-      box-shadow: 0 0 25px rgba(var(--accent), .35);
+      box-shadow: 0 0 25px rgba(var(--accent),.35);
     }
 
     .status-dot {
@@ -451,11 +462,9 @@
       0% {
         box-shadow: 0 0 0 0 rgba(35,165,89,.55);
       }
-
       70% {
         box-shadow: 0 0 0 9px rgba(35,165,89,0);
       }
-
       100% {
         box-shadow: 0 0 0 0 rgba(35,165,89,0);
       }
@@ -471,9 +480,9 @@
         linear-gradient(
           90deg,
           #fff,
-          rgba(var(--accent), .65),
+          rgba(var(--accent),.65),
           #fff,
-          rgba(var(--accent), .65),
+          rgba(var(--accent),.65),
           #fff
         );
       background-size: 250% auto;
@@ -493,13 +502,12 @@
 
     @keyframes usernameGlow {
       0%,100% {
-        filter: drop-shadow(0 0 3px rgba(var(--accent), .25));
+        filter: drop-shadow(0 0 3px rgba(var(--accent),.25));
       }
-
       50% {
         filter:
-          drop-shadow(0 0 10px rgba(var(--accent), .65))
-          drop-shadow(0 0 25px rgba(var(--accent), .18));
+          drop-shadow(0 0 10px rgba(var(--accent),.65))
+          drop-shadow(0 0 25px rgba(var(--accent),.18));
       }
     }
 
@@ -508,13 +516,13 @@
       font-size: .88rem;
       color: #b5bac1;
       margin-bottom: 15px;
-      text-shadow: 0 0 8px rgba(var(--accent), .12);
+      text-shadow: 0 0 8px rgba(var(--accent),.12);
       transition: .3s ease;
     }
 
     .handle:hover {
       color: #fff;
-      text-shadow: 0 0 12px rgba(var(--accent), .5);
+      text-shadow: 0 0 12px rgba(var(--accent),.5);
     }
 
     .badges {
@@ -530,7 +538,7 @@
       width: 24px;
       height: 24px;
       border-radius: 5px;
-      filter: drop-shadow(0 0 3px rgba(var(--accent), .15));
+      filter: drop-shadow(0 0 3px rgba(var(--accent),.15));
       transition:
         transform .3s cubic-bezier(.16,1,.3,1),
         filter .3s ease;
@@ -543,8 +551,8 @@
         scale(1.25)
         rotate(5deg);
       filter:
-        drop-shadow(0 0 5px rgba(var(--accent), .8))
-        drop-shadow(0 0 12px rgba(var(--accent), .35));
+        drop-shadow(0 0 5px rgba(var(--accent),.8))
+        drop-shadow(0 0 12px rgba(var(--accent),.35));
     }
 
     @keyframes badgeAppear {
@@ -552,7 +560,6 @@
         opacity: 0;
         transform: translateY(10px) scale(.5);
       }
-
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -567,7 +574,7 @@
       color: #949ba4;
       margin-bottom: 7px;
       padding-left: 2px;
-      text-shadow: 0 0 8px rgba(var(--accent), .15);
+      text-shadow: 0 0 8px rgba(var(--accent),.15);
     }
 
     .bio-box {
@@ -584,7 +591,7 @@
       min-height: 3.4em;
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.025),
-        0 0 20px rgba(var(--accent), .025);
+        0 0 20px rgba(var(--accent),.025);
       transition:
         transform .3s ease,
         box-shadow .4s ease,
@@ -593,11 +600,11 @@
 
     .bio-box:hover {
       transform: translateY(-2px);
-      border-color: rgba(var(--accent), .18);
+      border-color: rgba(var(--accent),.18);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.04),
         0 8px 30px rgba(0,0,0,.25),
-        0 0 25px rgba(var(--accent), .08);
+        0 0 25px rgba(var(--accent),.08);
     }
 
     .bio-box::before {
@@ -611,7 +618,7 @@
         linear-gradient(
           90deg,
           transparent,
-          rgba(var(--accent), .6),
+          rgba(var(--accent),.6),
           transparent
         );
       opacity: .5;
@@ -679,7 +686,7 @@
       background:
         radial-gradient(
           circle,
-          rgba(var(--accent), .25),
+          rgba(var(--accent),.25),
           transparent 65%
         );
       transform: scale(0);
@@ -705,16 +712,14 @@
       transform:
         translateY(-5px)
         scale(1.08);
-      border-color: rgba(var(--accent), .25);
+      border-color: rgba(var(--accent),.25);
       box-shadow:
         0 10px 25px rgba(0,0,0,.3),
-        0 0 25px rgba(var(--accent), .2);
+        0 0 25px rgba(var(--accent),.2);
     }
 
     .link-icon:hover svg {
-      transform:
-        scale(1.15)
-        rotate(-5deg);
+      transform: scale(1.15) rotate(-5deg);
     }
 
     .footer {
@@ -722,7 +727,7 @@
       text-align: center;
       font-size: .7rem;
       color: #6d6f78;
-      text-shadow: 0 0 8px rgba(var(--accent), .1);
+      text-shadow: 0 0 8px rgba(var(--accent),.1);
     }
 
     .friends-overlay {
@@ -731,11 +736,12 @@
       background:
         radial-gradient(
           circle at center,
-          rgba(var(--accent), .08),
+          rgba(var(--accent),.08),
           transparent 45%
         ),
         rgba(0,0,0,.72);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -769,7 +775,7 @@
         box-shadow .5s ease;
       box-shadow:
         0 25px 80px rgba(0,0,0,.7),
-        0 0 40px rgba(var(--accent), .08);
+        0 0 40px rgba(var(--accent),.08);
       scrollbar-width: thin;
     }
 
@@ -778,13 +784,13 @@
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      pointer-events: none;
       background:
         radial-gradient(
           circle at 50% 0%,
-          rgba(var(--accent), .12),
-          transparent 42%
+          rgba(var(--accent),.12),
+          transparent 45%
         );
+      pointer-events: none;
     }
 
     .friends-overlay.open .friends-modal {
@@ -799,12 +805,14 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 15px;
+      position: relative;
+      z-index: 1;
     }
 
     .friends-title {
       font-size: 1rem;
       font-weight: 800;
-      text-shadow: 0 0 12px rgba(var(--accent), .3);
+      text-shadow: 0 0 12px rgba(var(--accent),.3);
     }
 
     .friends-close {
@@ -832,6 +840,8 @@
       display: flex;
       flex-direction: column;
       gap: 9px;
+      position: relative;
+      z-index: 1;
     }
 
     .friend-item {
@@ -850,10 +860,10 @@
 
     .friend-item:hover {
       transform: translateX(4px);
-      border-color: rgba(var(--accent), .15);
+      border-color: rgba(var(--accent),.15);
       box-shadow:
         0 7px 25px rgba(0,0,0,.25),
-        0 0 18px rgba(var(--accent), .06);
+        0 0 18px rgba(var(--accent),.06);
     }
 
     .friend-avatar-wrap {
@@ -913,7 +923,7 @@
       width: 17px;
       height: 17px;
       border-radius: 3px;
-      filter: drop-shadow(0 0 3px rgba(var(--accent), .3));
+      filter: drop-shadow(0 0 3px rgba(var(--accent),.3));
     }
 
     @media (max-width: 480px) {
@@ -928,6 +938,16 @@
       }
     }
 
+    @media (hover: none), (pointer: coarse) {
+      .card {
+        transform:
+          perspective(900px)
+          rotateX(0deg)
+          rotateY(0deg)
+          scale(1);
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -935,6 +955,11 @@
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
+      }
+
+      .card {
+        transform: none !important;
+        transition: none !important;
       }
     }
   </style>
@@ -951,13 +976,18 @@
       <span id="view-count">–</span>
     </div>
 
-    <button class="audio-toggle" id="audio-toggle" title="Toggle sound" aria-label="Toggle sound">
+    <button class="audio-toggle muted" id="audio-toggle" title="Toggle sound" aria-label="Toggle sound">
       <svg id="audio-icon" viewBox="0 0 24 24">
         <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
       </svg>
     </button>
 
-    <audio id="bg-audio" src="https://raw.githubusercontent.com/paygates/bio/fe846f8cad16064f2c7c6b55f9d6764ed5350bef/suka.mp3" loop preload="auto"></audio>
+    <audio
+      id="bg-audio"
+      src="https://raw.githubusercontent.com/paygates/bio/fe846f8cad16064f2c7c6b55f9d6764ed5350bef/suka.mp3"
+      loop
+      preload="auto">
+    </audio>
 
     <div class="avatar-wrap" id="avatar-wrap" title="See friends">
       <img class="avatar" id="avatar" src="" alt="Avatar" crossorigin="anonymous">
@@ -972,13 +1002,21 @@
     <div class="bio-box" id="bio"></div>
 
     <div class="links">
-      <a class="link-icon" href="https://t.me/onthaal" target="_blank" rel="noopener" title="Telegram">
+      <a
+        class="link-icon"
+        href="https://t.me/onthaal"
+        target="_blank"
+        rel="noopener"
+        title="Telegram">
         <svg viewBox="0 0 24 24">
           <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
         </svg>
       </a>
 
-      <a class="link-icon" href="mailto:support@suka.rest" title="Email">
+      <a
+        class="link-icon"
+        href="mailto:support@suka.rest"
+        title="Email">
         <svg viewBox="0 0 24 24">
           <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
         </svg>
@@ -996,7 +1034,9 @@
       </div>
 
       <div class="friends-list" id="friends-list">
-        <div style="color:#949ba4;font-size:.85rem;text-align:center;padding:12px 0;">Loading…</div>
+        <div style="color:#949ba4;font-size:.85rem;text-align:center;padding:12px 0;">
+          Loading…
+        </div>
       </div>
     </div>
   </div>
@@ -1034,18 +1074,66 @@
       { flag: 1 << 22, file: "active_developer.svg", name: "Active Developer" }
     ];
 
-    const BADGE_CDN = "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
+    const BADGE_CDN =
+      "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
 
     let currentTheme = {
       card: "#2b2d31",
       darker: "#1e1f22",
       body: "#080808",
-      accent: "#fff"
+      accent: "#ffffff"
     };
 
     let hasIntroed = false;
     let friendsLoaded = false;
     let themeLocked = false;
+
+    const card = document.getElementById("card");
+
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    function animateTilt() {
+      currentX += (targetX - currentX) * 0.09;
+      currentY += (targetY - currentY) * 0.09;
+
+      card.style.setProperty("--rotate-x", `${currentX}deg`);
+      card.style.setProperty("--rotate-y", `${currentY}deg`);
+
+      requestAnimationFrame(animateTilt);
+    }
+
+    function updateTilt(x, y) {
+      const rect = card.getBoundingClientRect();
+
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const normalizedX = (x - centerX) / (rect.width / 2);
+      const normalizedY = (y - centerY) / (rect.height / 2);
+
+      targetY = normalizedX * 9;
+      targetX = normalizedY * -9;
+    }
+
+    document.addEventListener("mousemove", e => {
+      if (window.matchMedia("(pointer: coarse)").matches) return;
+      updateTilt(e.clientX, e.clientY);
+    });
+
+    document.addEventListener("mouseleave", () => {
+      targetX = 0;
+      targetY = 0;
+    });
+
+    window.addEventListener("blur", () => {
+      targetX = 0;
+      targetY = 0;
+    });
+
+    animateTilt();
 
     function createSnow() {
       const snow = document.getElementById("snow");
@@ -1055,7 +1143,7 @@
         dot.className = "b";
 
         const size = Math.floor(Math.random() * 10) + 2;
-        const left = (i / 80) * 100;
+        const left = Math.random() * 100;
         const duration = Math.floor(Math.random() * 20) + 11;
         const delay = Math.floor(Math.random() * 12);
 
@@ -1070,7 +1158,9 @@
     }
 
     function getBadges(publicFlags) {
-      return BADGE_MAP.filter(b => (publicFlags & b.flag) === b.flag);
+      return BADGE_MAP.filter(
+        b => (publicFlags & b.flag) === b.flag
+      );
     }
 
     function avatarUrl(user) {
@@ -1090,7 +1180,7 @@
 
       const ext = user.avatar.startsWith("a_") ? "gif" : "png";
 
-      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
     }
 
     function themeFromProfile(user) {
@@ -1129,7 +1219,12 @@
 
         ctx.drawImage(img, 0, 0, size, size);
 
-        const data = ctx.getImageData(0, 0, size, size).data;
+        const data = ctx.getImageData(
+          0,
+          0,
+          size,
+          size
+        ).data;
 
         let r = 0;
         let g = 0;
@@ -1140,7 +1235,9 @@
           const brightness =
             (data[i] + data[i + 1] + data[i + 2]) / 3;
 
-          if (brightness < 25 || brightness > 230) continue;
+          if (brightness < 25 || brightness > 230) {
+            continue;
+          }
 
           r += data[i];
           g += data[i + 1];
@@ -1169,32 +1266,34 @@
     function applyTheme(color) {
       const { r, g, b } = color;
 
-      const cardR = Math.min(255, r + 28);
-      const cardG = Math.min(255, g + 28);
-      const cardB = Math.min(255, b + 28);
+      const cardBg = `rgb(
+        ${Math.min(255, r + 28)},
+        ${Math.min(255, g + 28)},
+        ${Math.min(255, b + 28)}
+      )`;
 
-      const accentR = Math.min(255, r + 100);
-      const accentG = Math.min(255, g + 100);
-      const accentB = Math.min(255, b + 100);
+      const darker = `rgb(${r},${g},${b})`;
 
-      const cardBg = `rgb(${cardR}, ${cardG}, ${cardB})`;
-      const darker = `rgb(${r}, ${g}, ${b})`;
       const bodyBg = `rgb(
         ${Math.max(0, r - 12)},
         ${Math.max(0, g - 12)},
         ${Math.max(0, b - 12)}
       )`;
 
+      const accentR = Math.min(255, r + 100);
+      const accentG = Math.min(255, g + 100);
+      const accentB = Math.min(255, b + 100);
+
       currentTheme = {
         card: cardBg,
         darker,
         body: bodyBg,
-        accent: `rgb(${accentR}, ${accentG}, ${accentB})`
+        accent: `rgb(${accentR},${accentG},${accentB})`
       };
 
       document.documentElement.style.setProperty(
         "--accent",
-        `${accentR}, ${accentG}, ${accentB}`
+        `${accentR},${accentG},${accentB}`
       );
 
       document.documentElement.style.setProperty(
@@ -1211,6 +1310,32 @@
         "--bg",
         bodyBg
       );
+
+      document.body.style.background =
+        `radial-gradient(circle at 50% 50%, rgba(${accentR},${accentG},${accentB},.07), transparent 35%), radial-gradient(circle at 10% 20%, rgba(${accentR},${accentG},${accentB},.04), transparent 30%), ${bodyBg}`;
+
+      document.querySelectorAll(".avatar,.status-dot").forEach(el => {
+        el.style.borderColor = cardBg;
+      });
+
+      document.querySelectorAll(".bio-box,.link-icon").forEach(el => {
+        el.style.background = darker;
+      });
+
+      document.getElementById("friends-modal").style.background =
+        cardBg;
+
+      document.querySelectorAll(".friend-item").forEach(el => {
+        el.style.background = darker;
+      });
+
+      document.querySelectorAll(".friends-close").forEach(el => {
+        el.style.background = darker;
+      });
+
+      document.querySelectorAll(".friend-avatar").forEach(el => {
+        el.style.background = cardBg;
+      });
 
       themeLocked = true;
     }
@@ -1240,12 +1365,16 @@
     async function loadViews() {
       try {
         const res = await fetch(
-          "https://countapi.mileshilliard.com/api/v1/hit/" + COUNTER_KEY
+          "https://countapi.mileshilliard.com/api/v1/hit/" +
+          COUNTER_KEY
         );
 
         const data = await res.json();
 
-        const value = data.value ?? data.count ?? 0;
+        const value =
+          data.value ??
+          data.count ??
+          0;
 
         document.getElementById("view-count").textContent =
           Number(value).toLocaleString();
@@ -1272,14 +1401,36 @@
               .then(updateIcon)
               .catch(() => {});
 
-            window.removeEventListener("click", startOnInteract);
-            window.removeEventListener("keydown", startOnInteract);
-            window.removeEventListener("touchstart", startOnInteract);
+            window.removeEventListener(
+              "click",
+              startOnInteract
+            );
+
+            window.removeEventListener(
+              "keydown",
+              startOnInteract
+            );
+
+            window.removeEventListener(
+              "touchstart",
+              startOnInteract
+            );
           };
 
-          window.addEventListener("click", startOnInteract);
-          window.addEventListener("keydown", startOnInteract);
-          window.addEventListener("touchstart", startOnInteract);
+          window.addEventListener(
+            "click",
+            startOnInteract
+          );
+
+          window.addEventListener(
+            "keydown",
+            startOnInteract
+          );
+
+          window.addEventListener(
+            "touchstart",
+            startOnInteract
+          );
         });
 
       toggle.addEventListener("click", e => {
@@ -1311,7 +1462,8 @@
           avatar.onload = () => {
             if (themeLocked) return;
 
-            const dominant = getDominantColor(avatar);
+            const dominant =
+              getDominantColor(avatar);
 
             applyTheme(
               dominant || {
@@ -1354,16 +1506,20 @@
 
       badgesEl.innerHTML = "";
 
-      getBadges(user.public_flags || 0).forEach(b => {
-        const img = document.createElement("img");
+      getBadges(user.public_flags || 0)
+        .forEach(b => {
+          const img =
+            document.createElement("img");
 
-        img.src = BADGE_CDN + b.file;
-        img.alt = b.name;
-        img.title = b.name;
-        img.className = "badge";
+          img.src =
+            BADGE_CDN + b.file;
 
-        badgesEl.appendChild(img);
-      });
+          img.alt = b.name;
+          img.title = b.name;
+          img.className = "badge";
+
+          badgesEl.appendChild(img);
+        });
 
       document.getElementById("username").textContent =
         displayName;
@@ -1394,14 +1550,11 @@
       document.getElementById("username").textContent =
         "Unavailable";
 
-      document.getElementById("handle").textContent =
-        "";
+      document.getElementById("handle").textContent = "";
 
-      document.getElementById("badges").innerHTML =
-        "";
+      document.getElementById("badges").innerHTML = "";
 
-      document.getElementById("footer").textContent =
-        "";
+      document.getElementById("footer").textContent = "";
     }
 
     async function fetchPresence() {
@@ -1480,8 +1633,9 @@
         const item =
           document.createElement("div");
 
-        item.className =
-          "friend-item";
+        item.className = "friend-item";
+        item.style.background =
+          currentTheme.darker;
 
         if (!data) {
           item.innerHTML = `
@@ -1491,15 +1645,9 @@
                 style="display:flex;align-items:center;justify-content:center;color:#6d6f78;font-size:.7rem;"
               >?</div>
             </div>
-
             <div class="friend-info">
-              <div class="friend-name">
-                Unavailable
-              </div>
-
-              <div class="friend-username">
-                ${id}
-              </div>
+              <div class="friend-name">Unavailable</div>
+              <div class="friend-username">${id}</div>
             </div>
           `;
 
@@ -1549,15 +1697,15 @@
         const friendAvatar =
           item.querySelector(".friend-avatar");
 
+        friendAvatar.style.background =
+          currentTheme.card;
+
         if (profileTheme) {
-          const {
-            r,
-            g,
-            b
-          } = profileTheme;
+          const { r, g, b } =
+            profileTheme;
 
           friendAvatar.style.boxShadow =
-            `0 0 0 2px rgba(${r}, ${g}, ${b}, .35)`;
+            `0 0 0 2px rgba(${r},${g},${b},.35), 0 0 15px rgba(${r},${g},${b},.12)`;
         }
 
         listEl.appendChild(item);
@@ -1591,6 +1739,11 @@
         document.getElementById("friends-overlay");
 
       overlay.classList.add("open");
+
+      document.getElementById(
+        "friends-modal"
+      ).style.background =
+        currentTheme.card;
 
       loadFriends();
     }
