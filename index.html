@@ -26,6 +26,8 @@
       --rotate-x: 0deg;
       --rotate-y: 0deg;
       --card-scale: 1;
+      --translate-x: 0px;
+      --translate-y: 0px;
     }
 
     * {
@@ -55,24 +57,6 @@
       transition: background 1s ease;
     }
 
-    body::before {
-      content: "";
-      position: fixed;
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background:
-        radial-gradient(
-          circle,
-          rgba(var(--accent),.11),
-          transparent 65%
-        );
-      filter: blur(70px);
-      pointer-events: none;
-      animation: ambientMove 12s ease-in-out infinite alternate;
-      z-index: 0;
-    }
-
     body::after {
       content: "";
       position: fixed;
@@ -88,18 +72,6 @@
       pointer-events: none;
       animation: backgroundSweep 12s linear infinite;
       z-index: 0;
-    }
-
-    @keyframes ambientMove {
-      0% {
-        transform: translate(-25vw,-15vh) scale(.8);
-      }
-      50% {
-        transform: translate(20vw,10vh) scale(1.2);
-      }
-      100% {
-        transform: translate(-5vw,25vh) scale(.9);
-      }
     }
 
     @keyframes backgroundSweep {
@@ -166,29 +138,31 @@
       box-shadow:
         0 30px 80px rgba(0,0,0,.65),
         0 0 0 1px rgba(255,255,255,.025),
-        0 0 45px rgba(var(--accent),.08);
+        0 0 45px rgba(var(--accent),.08),
+        0 0 70px 6px rgba(255,255,255,.14);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       transform-style: preserve-3d;
       transform:
-        perspective(900px)
+        perspective(1000px)
         rotateX(var(--rotate-x))
         rotateY(var(--rotate-y))
+        translate3d(var(--translate-x),var(--translate-y),0)
         scale(var(--card-scale));
       will-change: transform;
-      animation: cardEnter .9s cubic-bezier(.16,1,.3,1) both;
+      animation: cardEnter .9s cubic-bezier(.16,1,.3,1) backwards;
       transition:
         background .8s ease,
         box-shadow .5s ease,
-        border-color .5s ease,
-        transform .12s ease-out;
+        border-color .5s ease;
     }
 
     .card:hover {
       box-shadow:
         0 35px 95px rgba(0,0,0,.72),
         0 0 0 1px rgba(255,255,255,.035),
-        0 0 60px rgba(var(--accent),.14);
+        0 0 60px rgba(var(--accent),.14),
+        0 0 100px 14px rgba(255,255,255,.32);
     }
 
     .card::before {
@@ -268,6 +242,18 @@
       100% {
         background-position: 0% 50%;
       }
+    }
+
+    .enter-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .enter-overlay.hidden {
+      display: none;
     }
 
     .views {
@@ -538,7 +524,6 @@
       width: 24px;
       height: 24px;
       border-radius: 5px;
-      object-fit: contain;
       filter: drop-shadow(0 0 3px rgba(var(--accent),.15));
       transition:
         transform .3s cubic-bezier(.16,1,.3,1),
@@ -924,7 +909,6 @@
       width: 17px;
       height: 17px;
       border-radius: 3px;
-      object-fit: contain;
       filter: drop-shadow(0 0 3px rgba(var(--accent),.3));
     }
 
@@ -937,16 +921,6 @@
         max-width: 380px;
         padding-left: 20px;
         padding-right: 20px;
-      }
-    }
-
-    @media (hover: none), (pointer: coarse) {
-      .card {
-        transform:
-          perspective(900px)
-          rotateX(0deg)
-          rotateY(0deg)
-          scale(1);
       }
     }
 
@@ -968,6 +942,8 @@
 </head>
 
 <body>
+  <div class="enter-overlay" id="enter-overlay"></div>
+
   <div id="snow"></div>
 
   <div class="card" id="card">
@@ -1057,11 +1033,9 @@
       "1371728976938139713"
     ];
 
-    const FRIEND_PROFILE_API =
-      "https://discord-lookup.lookupbotdc.workers.dev/search/";
+    const FRIEND_PROFILE_API = "https://discord-lookup.lookupbotdc.workers.dev/search/";
 
-    const COUNTER_KEY =
-      "suka-bio-" + DISCORD_ID;
+    const COUNTER_KEY = "suka-bio-" + DISCORD_ID;
 
     const BADGE_MAP = [
       { flag: 1 << 0, file: "staff.svg", name: "Discord Staff" },
@@ -1081,59 +1055,6 @@
     const BADGE_CDN =
       "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
 
-    const NITRO_BADGE = {
-      file: "nitro.svg",
-      name: "Discord Nitro"
-    };
-
-    const BOOST_BADGES = [
-      {
-        months: 24,
-        file: "boosting_24_months.svg",
-        name: "Server Booster - 24 Months"
-      },
-      {
-        months: 18,
-        file: "boosting_18_months.svg",
-        name: "Server Booster - 18 Months"
-      },
-      {
-        months: 15,
-        file: "boosting_15_months.svg",
-        name: "Server Booster - 15 Months"
-      },
-      {
-        months: 12,
-        file: "boosting_12_months.svg",
-        name: "Server Booster - 12 Months"
-      },
-      {
-        months: 9,
-        file: "boosting_9_months.svg",
-        name: "Server Booster - 9 Months"
-      },
-      {
-        months: 6,
-        file: "boosting_6_months.svg",
-        name: "Server Booster - 6 Months"
-      },
-      {
-        months: 3,
-        file: "boosting_3_months.svg",
-        name: "Server Booster - 3 Months"
-      },
-      {
-        months: 2,
-        file: "boosting_2_months.svg",
-        name: "Server Booster - 2 Months"
-      },
-      {
-        months: 1,
-        file: "boosting_1_months.svg",
-        name: "Server Booster - 1 Month"
-      }
-    ];
-
     let currentTheme = {
       card: "#2b2d31",
       darker: "#1e1f22",
@@ -1152,223 +1073,106 @@
     let currentX = 0;
     let currentY = 0;
 
+    let targetTransX = 0;
+    let targetTransY = 0;
+    let currentTransX = 0;
+    let currentTransY = 0;
+
     function animateTilt() {
-      currentX += (targetX - currentX) * 0.09;
-      currentY += (targetY - currentY) * 0.09;
+      currentX += (targetX - currentX) * 0.06;
+      currentY += (targetY - currentY) * 0.06;
+      currentTransX += (targetTransX - currentTransX) * 0.06;
+      currentTransY += (targetTransY - currentTransY) * 0.06;
 
-      card.style.setProperty(
-        "--rotate-x",
-        `${currentX}deg`
-      );
-
-      card.style.setProperty(
-        "--rotate-y",
-        `${currentY}deg`
-      );
+      card.style.setProperty("--rotate-x", `${currentX}deg`);
+      card.style.setProperty("--rotate-y", `${currentY}deg`);
+      card.style.setProperty("--translate-x", `${currentTransX}px`);
+      card.style.setProperty("--translate-y", `${currentTransY}px`);
 
       requestAnimationFrame(animateTilt);
     }
 
     function updateTilt(x, y) {
-      const rect =
-        card.getBoundingClientRect();
+      const rect = card.getBoundingClientRect();
 
-      const centerX =
-        rect.left + rect.width / 2;
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-      const centerY =
-        rect.top + rect.height / 2;
+      const normalizedX = (x - centerX) / (rect.width / 2);
+      const normalizedY = (y - centerY) / (rect.height / 2);
 
-      const normalizedX =
-        (x - centerX) /
-        (rect.width / 2);
+      targetY = normalizedX * 8;
+      targetX = normalizedY * -8;
 
-      const normalizedY =
-        (y - centerY) /
-        (rect.height / 2);
-
-      targetY =
-        normalizedX * 9;
-
-      targetX =
-        normalizedY * -9;
+      targetTransX = normalizedX * 6;
+      targetTransY = normalizedY * 6;
     }
 
-    document.addEventListener(
-      "mousemove",
-      e => {
-        if (
-          window.matchMedia(
-            "(pointer: coarse)"
-          ).matches
-        ) {
-          return;
-        }
+    document.addEventListener("mousemove", e => {
+      updateTilt(e.clientX, e.clientY);
+    });
 
-        updateTilt(
-          e.clientX,
-          e.clientY
-        );
+    document.addEventListener("touchstart", e => {
+      if (e.touches && e.touches.length) {
+        updateTilt(e.touches[0].clientX, e.touches[0].clientY);
       }
-    );
+    }, { passive: true });
 
-    document.addEventListener(
-      "mouseleave",
-      () => {
-        targetX = 0;
-        targetY = 0;
+    document.addEventListener("touchmove", e => {
+      if (e.touches && e.touches.length) {
+        updateTilt(e.touches[0].clientX, e.touches[0].clientY);
       }
-    );
+    }, { passive: true });
 
-    window.addEventListener(
-      "blur",
-      () => {
-        targetX = 0;
-        targetY = 0;
-      }
-    );
+    document.addEventListener("touchend", () => {
+      targetX = 0;
+      targetY = 0;
+      targetTransX = 0;
+      targetTransY = 0;
+    });
+
+    document.addEventListener("mouseleave", () => {
+      targetX = 0;
+      targetY = 0;
+      targetTransX = 0;
+      targetTransY = 0;
+    });
+
+    window.addEventListener("blur", () => {
+      targetX = 0;
+      targetY = 0;
+      targetTransX = 0;
+      targetTransY = 0;
+    });
 
     animateTilt();
 
     function createSnow() {
-      const snow =
-        document.getElementById("snow");
+      const snow = document.getElementById("snow");
 
       for (let i = 0; i < 80; i++) {
-        const dot =
-          document.createElement("div");
-
+        const dot = document.createElement("div");
         dot.className = "b";
 
-        const size =
-          Math.floor(
-            Math.random() * 10
-          ) + 2;
+        const size = Math.floor(Math.random() * 10) + 2;
+        const left = Math.random() * 100;
+        const duration = Math.floor(Math.random() * 20) + 11;
+        const delay = Math.floor(Math.random() * 12);
 
-        const left =
-          Math.random() * 100;
-
-        const duration =
-          Math.floor(
-            Math.random() * 20
-          ) + 11;
-
-        const delay =
-          Math.floor(
-            Math.random() * 12
-          );
-
-        dot.style.left =
-          `${left}%`;
-
-        dot.style.width =
-          `${size}px`;
-
-        dot.style.height =
-          `${size}px`;
-
-        dot.style.animationDuration =
-          `${duration}s`;
-
-        dot.style.animationDelay =
-          `${delay}s`;
+        dot.style.left = `${left}%`;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        dot.style.animationDuration = `${duration}s`;
+        dot.style.animationDelay = `${delay}s`;
 
         snow.appendChild(dot);
       }
     }
 
-    function getBoostMonths(user) {
-      if (!user) {
-        return 0;
-      }
-
-      const since =
-        user.premium_since ||
-        user.premiumSince ||
-        user.boost_since ||
-        user.boostSince;
-
-      if (!since) {
-        return 0;
-      }
-
-      const timestamp =
-        new Date(since).getTime();
-
-      if (!Number.isFinite(timestamp)) {
-        return 0;
-      }
-
-      const elapsed =
-        Date.now() - timestamp;
-
-      if (elapsed < 0) {
-        return 0;
-      }
-
-      return Math.floor(
-        elapsed /
-        (1000 * 60 * 60 * 24 * 30.4375)
+    function getBadges(publicFlags) {
+      return BADGE_MAP.filter(
+        b => (publicFlags & b.flag) === b.flag
       );
-    }
-
-    function getBoostBadge(user) {
-      const months =
-        getBoostMonths(user);
-
-      return (
-        BOOST_BADGES.find(
-          badge =>
-            months >= badge.months
-        ) || null
-      );
-    }
-
-    function hasNitro(user) {
-      if (!user) {
-        return false;
-      }
-
-      return Boolean(
-        user.premium_type ||
-        user.premiumType ||
-        user.nitro ||
-        user.has_nitro ||
-        user.hasNitro
-      );
-    }
-
-    function getBadges(user) {
-      if (!user) {
-        return [];
-      }
-
-      const publicFlags =
-        Number(
-          user.public_flags ??
-          user.flags ??
-          0
-        );
-
-      const badges =
-        BADGE_MAP.filter(
-          badge =>
-            (publicFlags & badge.flag) ===
-            badge.flag
-        );
-
-      if (hasNitro(user)) {
-        badges.push(NITRO_BADGE);
-      }
-
-      const boostBadge =
-        getBoostBadge(user);
-
-      if (boostBadge) {
-        badges.push(boostBadge);
-      }
-
-      return badges;
     }
 
     function avatarUrl(user) {
@@ -1377,72 +1181,38 @@
       }
 
       if (!user.avatar) {
-        const discriminator =
-          user.discriminator || "0";
+        const discriminator = user.discriminator || "0";
 
-        const idx =
-          discriminator === "0"
-            ? Number(
-                (
-                  BigInt(user.id) >>
-                  22n
-                ) % 6n
-              )
-            : parseInt(
-                discriminator
-              ) % 5;
+        const idx = discriminator === "0"
+          ? Number((BigInt(user.id) >> 22n) % 6n)
+          : parseInt(discriminator) % 5;
 
         return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
       }
 
-      const ext =
-        user.avatar.startsWith("a_")
-          ? "gif"
-          : "png";
+      const ext = user.avatar.startsWith("a_") ? "gif" : "png";
 
       return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
     }
 
     function themeFromProfile(user) {
       if (user.banner_color) {
-        const hex =
-          user.banner_color.replace(
-            "#",
-            ""
-          );
+        const hex = user.banner_color.replace("#", "");
 
         if (hex.length === 6) {
           return {
-            r: parseInt(
-              hex.slice(0, 2),
-              16
-            ),
-            g: parseInt(
-              hex.slice(2, 4),
-              16
-            ),
-            b: parseInt(
-              hex.slice(4, 6),
-              16
-            )
+            r: parseInt(hex.slice(0, 2), 16),
+            g: parseInt(hex.slice(2, 4), 16),
+            b: parseInt(hex.slice(4, 6), 16)
           };
         }
       }
 
-      if (
-        typeof user.accent_color ===
-        "number"
-      ) {
+      if (typeof user.accent_color === "number") {
         return {
-          r:
-            (user.accent_color >> 16) &
-            255,
-          g:
-            (user.accent_color >> 8) &
-            255,
-          b:
-            user.accent_color &
-            255
+          r: (user.accent_color >> 16) & 255,
+          g: (user.accent_color >> 8) & 255,
+          b: user.accent_color & 255
         };
       }
 
@@ -1451,58 +1221,33 @@
 
     function getDominantColor(img) {
       try {
-        const canvas =
-          document.createElement(
-            "canvas"
-          );
-
+        const canvas = document.createElement("canvas");
         const size = 40;
 
         canvas.width = size;
         canvas.height = size;
 
-        const ctx =
-          canvas.getContext(
-            "2d"
-          );
+        const ctx = canvas.getContext("2d");
 
-        ctx.drawImage(
-          img,
+        ctx.drawImage(img, 0, 0, size, size);
+
+        const data = ctx.getImageData(
           0,
           0,
           size,
           size
-        );
-
-        const data =
-          ctx.getImageData(
-            0,
-            0,
-            size,
-            size
-          ).data;
+        ).data;
 
         let r = 0;
         let g = 0;
         let b = 0;
         let count = 0;
 
-        for (
-          let i = 0;
-          i < data.length;
-          i += 4
-        ) {
+        for (let i = 0; i < data.length; i += 4) {
           const brightness =
-            (
-              data[i] +
-              data[i + 1] +
-              data[i + 2]
-            ) / 3;
+            (data[i] + data[i + 1] + data[i + 2]) / 3;
 
-          if (
-            brightness < 25 ||
-            brightness > 230
-          ) {
+          if (brightness < 25 || brightness > 230) {
             continue;
           }
 
@@ -1516,14 +1261,9 @@
           return null;
         }
 
-        r =
-          Math.round(r / count);
-
-        g =
-          Math.round(g / count);
-
-        b =
-          Math.round(b / count);
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
 
         return {
           r: Math.round(r * .35),
@@ -1536,41 +1276,31 @@
     }
 
     function applyTheme(color) {
-      const { r, g, b } =
-        color;
+      const { r, g, b } = color;
 
-      const cardBg =
-        `rgb(
-          ${Math.min(255, r + 28)},
-          ${Math.min(255, g + 28)},
-          ${Math.min(255, b + 28)}
-        )`;
+      const cardBg = `rgb(
+        ${Math.min(255, r + 28)},
+        ${Math.min(255, g + 28)},
+        ${Math.min(255, b + 28)}
+      )`;
 
-      const darker =
-        `rgb(${r},${g},${b})`;
+      const darker = `rgb(${r},${g},${b})`;
 
-      const bodyBg =
-        `rgb(
-          ${Math.max(0, r - 12)},
-          ${Math.max(0, g - 12)},
-          ${Math.max(0, b - 12)}
-        )`;
+      const bodyBg = `rgb(
+        ${Math.max(0, r - 12)},
+        ${Math.max(0, g - 12)},
+        ${Math.max(0, b - 12)}
+      )`;
 
-      const accentR =
-        Math.min(255, r + 100);
-
-      const accentG =
-        Math.min(255, g + 100);
-
-      const accentB =
-        Math.min(255, b + 100);
+      const accentR = Math.min(255, r + 100);
+      const accentG = Math.min(255, g + 100);
+      const accentB = Math.min(255, b + 100);
 
       currentTheme = {
         card: cardBg,
         darker,
         body: bodyBg,
-        accent:
-          `rgb(${accentR},${accentG},${accentB})`
+        accent: `rgb(${accentR},${accentG},${accentB})`
       };
 
       document.documentElement.style.setProperty(
@@ -1596,266 +1326,142 @@
       document.body.style.background =
         `radial-gradient(circle at 50% 50%, rgba(${accentR},${accentG},${accentB},.07), transparent 35%), radial-gradient(circle at 10% 20%, rgba(${accentR},${accentG},${accentB},.04), transparent 30%), ${bodyBg}`;
 
-      document
-        .querySelectorAll(
-          ".avatar,.status-dot"
-        )
-        .forEach(el => {
-          el.style.borderColor =
-            cardBg;
-        });
+      document.querySelectorAll(".avatar,.status-dot").forEach(el => {
+        el.style.borderColor = cardBg;
+      });
 
-      document
-        .querySelectorAll(
-          ".bio-box,.link-icon"
-        )
-        .forEach(el => {
-          el.style.background =
-            darker;
-        });
+      document.querySelectorAll(".bio-box,.link-icon").forEach(el => {
+        el.style.background = darker;
+      });
 
-      document.getElementById(
-        "friends-modal"
-      ).style.background =
+      document.getElementById("friends-modal").style.background =
         cardBg;
 
-      document
-        .querySelectorAll(
-          ".friend-item"
-        )
-        .forEach(el => {
-          el.style.background =
-            darker;
-        });
+      document.querySelectorAll(".friend-item").forEach(el => {
+        el.style.background = darker;
+      });
 
-      document
-        .querySelectorAll(
-          ".friends-close"
-        )
-        .forEach(el => {
-          el.style.background =
-            darker;
-        });
+      document.querySelectorAll(".friends-close").forEach(el => {
+        el.style.background = darker;
+      });
 
-      document
-        .querySelectorAll(
-          ".friend-avatar"
-        )
-        .forEach(el => {
-          el.style.background =
-            cardBg;
-        });
+      document.querySelectorAll(".friend-avatar").forEach(el => {
+        el.style.background = cardBg;
+      });
 
       themeLocked = true;
     }
 
-    function typeText(
-      el,
-      text,
-      speed
-    ) {
-      return new Promise(
-        resolve => {
-          el.textContent = "";
-          el.classList.add(
-            "typing"
-          );
+    function typeText(el, text, speed) {
+      return new Promise(resolve => {
+        el.textContent = "";
+        el.classList.add("typing");
 
-          let i = 0;
+        let i = 0;
 
-          function tick() {
-            if (
-              i <= text.length
-            ) {
-              el.textContent =
-                text.slice(0, i);
-
-              i++;
-
-              setTimeout(
-                tick,
-                speed
-              );
-            } else {
-              el.classList.remove(
-                "typing"
-              );
-
-              resolve();
-            }
+        function tick() {
+          if (i <= text.length) {
+            el.textContent = text.slice(0, i);
+            i++;
+            setTimeout(tick, speed);
+          } else {
+            el.classList.remove("typing");
+            resolve();
           }
-
-          tick();
         }
-      );
+
+        tick();
+      });
     }
 
     async function loadViews() {
       try {
-        const res =
-          await fetch(
-            "https://countapi.mileshilliard.com/api/v1/hit/" +
-            COUNTER_KEY
-          );
+        const res = await fetch(
+          "https://countapi.mileshilliard.com/api/v1/hit/" +
+          COUNTER_KEY
+        );
 
-        const data =
-          await res.json();
+        const data = await res.json();
 
         const value =
           data.value ??
           data.count ??
           0;
 
-        document.getElementById(
-          "view-count"
-        ).textContent =
-          Number(
-            value
-          ).toLocaleString();
+        document.getElementById("view-count").textContent =
+          Number(value).toLocaleString();
       } catch {
-        document.getElementById(
-          "view-count"
-        ).textContent = "–";
+        document.getElementById("view-count").textContent = "–";
       }
     }
 
     function initAudio() {
-      const audio =
-        document.getElementById(
-          "bg-audio"
-        );
-
-      const toggle =
-        document.getElementById(
-          "audio-toggle"
-        );
+      const audio = document.getElementById("bg-audio");
+      const toggle = document.getElementById("audio-toggle");
+      const overlay = document.getElementById("enter-overlay");
 
       function updateIcon() {
-        toggle.classList.toggle(
-          "muted",
-          audio.paused
-        );
+        toggle.classList.toggle("muted", audio.paused);
       }
 
-      audio.play()
-        .then(updateIcon)
-        .catch(() => {
+      overlay.addEventListener("click", () => {
+        audio.play()
+          .then(updateIcon)
+          .catch(() => {});
+
+        overlay.classList.add("hidden");
+      }, { once: true });
+
+      toggle.addEventListener("click", e => {
+        e.stopPropagation();
+
+        if (audio.paused) {
+          audio.play()
+            .then(updateIcon)
+            .catch(() => {});
+        } else {
+          audio.pause();
           updateIcon();
-
-          const startOnInteract =
-            () => {
-              audio.play()
-                .then(updateIcon)
-                .catch(() => {});
-
-              window.removeEventListener(
-                "click",
-                startOnInteract
-              );
-
-              window.removeEventListener(
-                "keydown",
-                startOnInteract
-              );
-
-              window.removeEventListener(
-                "touchstart",
-                startOnInteract
-              );
-            };
-
-          window.addEventListener(
-            "click",
-            startOnInteract
-          );
-
-          window.addEventListener(
-            "keydown",
-            startOnInteract
-          );
-
-          window.addEventListener(
-            "touchstart",
-            startOnInteract
-          );
-        });
-
-      toggle.addEventListener(
-        "click",
-        e => {
-          e.stopPropagation();
-
-          if (audio.paused) {
-            audio.play()
-              .then(updateIcon)
-              .catch(() => {});
-          } else {
-            audio.pause();
-            updateIcon();
-          }
         }
-      );
+      });
     }
 
     function render(data) {
-      const user =
-        data.discord_user;
-
-      const status =
-        data.discord_status ||
-        "offline";
-
-      const url =
-        avatarUrl(user);
-
-      const avatar =
-        document.getElementById(
-          "avatar"
-        );
+      const user = data.discord_user;
+      const status = data.discord_status || "offline";
+      const url = avatarUrl(user);
+      const avatar = document.getElementById("avatar");
 
       if (!themeLocked) {
-        const profileTheme =
-          themeFromProfile(
-            user
-          );
+        const profileTheme = themeFromProfile(user);
 
         if (profileTheme) {
-          applyTheme(
-            profileTheme
-          );
+          applyTheme(profileTheme);
         } else {
-          avatar.onload =
-            () => {
-              if (themeLocked) {
-                return;
-              }
+          avatar.onload = () => {
+            if (themeLocked) return;
 
-              const dominant =
-                getDominantColor(
-                  avatar
-                );
+            const dominant =
+              getDominantColor(avatar);
 
-              applyTheme(
-                dominant || {
-                  r: 20,
-                  g: 20,
-                  b: 24
-                }
-              );
-            };
-
-          avatar.onerror =
-            () => {
-              if (themeLocked) {
-                return;
-              }
-
-              applyTheme({
+            applyTheme(
+              dominant || {
                 r: 20,
                 g: 20,
                 b: 24
-              });
-            };
+              }
+            );
+          };
+
+          avatar.onerror = () => {
+            if (themeLocked) return;
+
+            applyTheme({
+              r: 20,
+              g: 20,
+              b: 24
+            });
+          };
         }
       }
 
@@ -1865,69 +1471,43 @@
         user.global_name ||
         user.username;
 
-      document.getElementById(
-        "handle"
-      ).textContent =
+      document.getElementById("handle").textContent =
         `@${user.username}`;
 
       const statusEl =
-        document.getElementById(
-          "status"
-        );
+        document.getElementById("status");
 
       statusEl.className =
-        "status-dot " +
-        status;
+        "status-dot " + status;
 
       const badgesEl =
-        document.getElementById(
-          "badges"
-        );
+        document.getElementById("badges");
 
       badgesEl.innerHTML = "";
 
-      getBadges(user)
-        .forEach(
-          (badge, index) => {
-            const img =
-              document.createElement(
-                "img"
-              );
+      getBadges(user.public_flags || 0)
+        .forEach(b => {
+          const img =
+            document.createElement("img");
 
-            img.src =
-              BADGE_CDN +
-              badge.file;
+          img.src =
+            BADGE_CDN + b.file;
 
-            img.alt =
-              badge.name;
+          img.alt = b.name;
+          img.title = b.name;
+          img.className = "badge";
 
-            img.title =
-              badge.name;
+          badgesEl.appendChild(img);
+        });
 
-            img.className =
-              "badge";
-
-            img.style.animationDelay =
-              `${index * 50}ms`;
-
-            badgesEl.appendChild(
-              img
-            );
-          }
-        );
-
-      document.getElementById(
-        "username"
-      ).textContent =
+      document.getElementById("username").textContent =
         displayName;
 
       if (!hasIntroed) {
         hasIntroed = true;
 
         const bioEl =
-          document.getElementById(
-            "bio"
-          );
+          document.getElementById("bio");
 
         typeText(
           bioEl,
@@ -1938,68 +1518,49 @@
         document.title =
           `${displayName} • Bio`;
       } else {
-        document.getElementById(
-          "bio"
-        ).textContent =
+        document.getElementById("bio").textContent =
           BIO_TEXT;
       }
 
-      document.getElementById(
-        "footer"
-      ).textContent = "";
+      document.getElementById("footer").textContent = "";
     }
 
     function showError() {
-      document.getElementById(
-        "username"
-      ).textContent =
+      document.getElementById("username").textContent =
         "Unavailable";
 
-      document.getElementById(
-        "handle"
-      ).textContent = "";
+      document.getElementById("handle").textContent = "";
 
-      document.getElementById(
-        "badges"
-      ).innerHTML = "";
+      document.getElementById("badges").innerHTML = "";
 
-      document.getElementById(
-        "footer"
-      ).textContent = "";
+      document.getElementById("footer").textContent = "";
     }
 
     async function fetchPresence() {
       try {
-        const res =
-          await fetch(
-            `https://api.lanyard.rest/v1/users/${DISCORD_ID}`
-          );
+        const res = await fetch(
+          `https://api.lanyard.rest/v1/users/${DISCORD_ID}`
+        );
 
-        const json =
-          await res.json();
+        const json = await res.json();
 
         if (!json.success) {
           showError();
           return;
         }
 
-        render(
-          json.data
-        );
+        render(json.data);
       } catch {
         showError();
       }
     }
 
-    async function fetchFriendProfile(
-      id
-    ) {
+    async function fetchFriendProfile(id) {
       try {
-        const res =
-          await fetch(
-            FRIEND_PROFILE_API +
-            encodeURIComponent(id)
-          );
+        const res = await fetch(
+          FRIEND_PROFILE_API +
+          encodeURIComponent(id)
+        );
 
         if (!res.ok) {
           return {
@@ -2008,14 +1569,11 @@
           };
         }
 
-        const json =
-          await res.json();
+        const json = await res.json();
 
         return {
           id,
-          data:
-            json.user ||
-            json
+          data: json.user || json
         };
       } catch {
         return {
@@ -2025,196 +1583,141 @@
       }
     }
 
-    function renderFriendBadges(
-      user
-    ) {
-      return getBadges(user)
-        .slice(0, 5)
-        .map(
-          badge => `
-            <img
-              class="friend-badge"
-              src="${BADGE_CDN + badge.file}"
-              alt="${escapeHtml(badge.name)}"
-              title="${escapeHtml(badge.name)}"
-            >
-          `
-        )
+    function renderFriendBadges(user) {
+      const flags =
+        user.public_flags ||
+        user.flags ||
+        0;
+
+      return getBadges(flags)
+        .slice(0, 4)
+        .map(b => `
+          <img
+            class="friend-badge"
+            src="${BADGE_CDN + b.file}"
+            alt="${b.name}"
+            title="${b.name}"
+          >
+        `)
         .join("");
     }
 
-    function renderFriendsList(
-      entries
-    ) {
+    function renderFriendsList(entries) {
       const listEl =
-        document.getElementById(
-          "friends-list"
-        );
+        document.getElementById("friends-list");
 
       listEl.innerHTML = "";
 
-      entries.forEach(
-        ({ id, data }) => {
-          const item =
-            document.createElement(
-              "div"
-            );
+      entries.forEach(({ id, data }) => {
+        const item =
+          document.createElement("div");
 
-          item.className =
-            "friend-item";
+        item.className = "friend-item";
+        item.style.background =
+          currentTheme.darker;
 
-          item.style.background =
-            currentTheme.darker;
-
-          if (!data) {
-            item.innerHTML = `
-              <div class="friend-avatar-wrap">
-                <div
-                  class="friend-avatar"
-                  style="display:flex;align-items:center;justify-content:center;color:#6d6f78;font-size:.7rem;"
-                >?</div>
-              </div>
-
-              <div class="friend-info">
-                <div class="friend-name">
-                  Unavailable
-                </div>
-
-                <div class="friend-username">
-                  ${escapeHtml(id)}
-                </div>
-              </div>
-            `;
-
-            listEl.appendChild(
-              item
-            );
-
-            return;
-          }
-
-          const displayName =
-            data.global_name ||
-            data.username ||
-            "Unknown";
-
-          const username =
-            data.username ||
-            displayName;
-
-          const url =
-            avatarUrl(data);
-
-          const profileTheme =
-            themeFromProfile(
-              data
-            );
-
+        if (!data) {
           item.innerHTML = `
             <div class="friend-avatar-wrap">
-              <img
+              <div
                 class="friend-avatar"
-                src="${url}"
-                alt="${escapeHtml(displayName)}"
-                crossorigin="anonymous"
-              >
+                style="display:flex;align-items:center;justify-content:center;color:#6d6f78;font-size:.7rem;"
+              >?</div>
             </div>
-
             <div class="friend-info">
-              <div class="friend-name">
-                ${escapeHtml(displayName)}
-              </div>
-
-              <div class="friend-username">
-                @${escapeHtml(username)}
-              </div>
-            </div>
-
-            <div class="friend-badges">
-              ${renderFriendBadges(data)}
+              <div class="friend-name">Unavailable</div>
+              <div class="friend-username">${id}</div>
             </div>
           `;
 
-          const friendAvatar =
-            item.querySelector(
-              ".friend-avatar"
-            );
-
-          friendAvatar.style.background =
-            currentTheme.card;
-
-          if (profileTheme) {
-            const {
-              r,
-              g,
-              b
-            } = profileTheme;
-
-            friendAvatar.style.boxShadow =
-              `0 0 0 2px rgba(${r},${g},${b},.35), 0 0 15px rgba(${r},${g},${b},.12)`;
-          }
-
-          listEl.appendChild(
-            item
-          );
+          listEl.appendChild(item);
+          return;
         }
-      );
+
+        const displayName =
+          data.global_name ||
+          data.username ||
+          "Unknown";
+
+        const username =
+          data.username ||
+          displayName;
+
+        const url =
+          avatarUrl(data);
+
+        const profileTheme =
+          themeFromProfile(data);
+
+        item.innerHTML = `
+          <div class="friend-avatar-wrap">
+            <img
+              class="friend-avatar"
+              src="${url}"
+              alt="${escapeHtml(displayName)}"
+            >
+          </div>
+
+          <div class="friend-info">
+            <div class="friend-name">
+              ${escapeHtml(displayName)}
+            </div>
+
+            <div class="friend-username">
+              @${escapeHtml(username)}
+            </div>
+          </div>
+
+          <div class="friend-badges">
+            ${renderFriendBadges(data)}
+          </div>
+        `;
+
+        const friendAvatar =
+          item.querySelector(".friend-avatar");
+
+        friendAvatar.style.background =
+          currentTheme.card;
+
+        if (profileTheme) {
+          const { r, g, b } =
+            profileTheme;
+
+          friendAvatar.style.boxShadow =
+            `0 0 0 2px rgba(${r},${g},${b},.35), 0 0 15px rgba(${r},${g},${b},.12)`;
+        }
+
+        listEl.appendChild(item);
+      });
     }
 
-    function escapeHtml(
-      value
-    ) {
+    function escapeHtml(value) {
       return String(value)
-        .replaceAll(
-          "&",
-          "&amp;"
-        )
-        .replaceAll(
-          "<",
-          "&lt;"
-        )
-        .replaceAll(
-          ">",
-          "&gt;"
-        )
-        .replaceAll(
-          '"',
-          "&quot;"
-        )
-        .replaceAll(
-          "'",
-          "&#039;"
-        );
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
     async function loadFriends() {
-      if (friendsLoaded) {
-        return;
-      }
+      if (friendsLoaded) return;
 
       friendsLoaded = true;
 
       const results =
         await Promise.all(
-          FRIEND_IDS.map(
-            fetchFriendProfile
-          )
+          FRIEND_IDS.map(fetchFriendProfile)
         );
 
-      renderFriendsList(
-        results
-      );
+      renderFriendsList(results);
     }
 
     function openFriendsModal() {
       const overlay =
-        document.getElementById(
-          "friends-overlay"
-        );
+        document.getElementById("friends-overlay");
 
-      overlay.classList.add(
-        "open"
-      );
+      overlay.classList.add("open");
 
       document.getElementById(
         "friends-modal"
@@ -2226,39 +1729,26 @@
 
     function closeFriendsModal() {
       document
-        .getElementById(
-          "friends-overlay"
-        )
-        .classList.remove(
-          "open"
-        );
+        .getElementById("friends-overlay")
+        .classList.remove("open");
     }
 
     document
-      .getElementById(
-        "avatar-wrap"
-      )
-      .addEventListener(
-        "click",
-        e => {
-          e.stopPropagation();
-          openFriendsModal();
-        }
-      );
+      .getElementById("avatar-wrap")
+      .addEventListener("click", e => {
+        e.stopPropagation();
+        openFriendsModal();
+      });
 
     document
-      .getElementById(
-        "friends-close"
-      )
+      .getElementById("friends-close")
       .addEventListener(
         "click",
         closeFriendsModal
       );
 
     document
-      .getElementById(
-        "friends-overlay"
-      )
+      .getElementById("friends-overlay")
       .addEventListener(
         "click",
         e => {
@@ -2274,9 +1764,7 @@
     document.addEventListener(
       "keydown",
       e => {
-        if (
-          e.key === "Escape"
-        ) {
+        if (e.key === "Escape") {
           closeFriendsModal();
         }
       }
