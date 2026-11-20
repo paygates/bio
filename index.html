@@ -34,9 +34,11 @@
     .theme:hover { border-color:#777; color:#ddd; }
 
     .friends { position:absolute; z-index:6; left:clamp(12px,2vw,40px); top:clamp(65px,10vh,120px); display:flex; flex-direction:column; align-items:center; gap:clamp(14px,2.6vh,26px); max-height:80vh; overflow:auto; scrollbar-width:thin; scrollbar-color:#333 transparent; padding:8px 12px 8px 8px; }
-    .friend { display:flex; align-items:center; flex-direction:column; gap:5px; text-decoration:none; color:#acacac; font-size:clamp(9px,.75vw,12px); letter-spacing:.04em; width:clamp(118px,10.5vw,150px); text-align:center; transition:color .2s; }
+    .friend { display:flex; align-items:center; flex-direction:column; gap:5px; text-decoration:none; color:#acacac; font-size:clamp(9px,.75vw,12px); letter-spacing:.04em; width:clamp(118px,10.5vw,150px); text-align:center; padding:12px 6px 10px; background:#050505b8; border:1px solid #181818; transition:color .2s,border-color .2s,box-shadow .2s; }
     .friend[aria-disabled="true"] { cursor:default; }
-    .friend:hover { color:#f5f5f5; }
+    .friend:hover { color:#f5f5f5; border-color:#3a3a3a; box-shadow:0 0 22px #ffffff08; }
+    .status-dot { position:absolute; right:2%; bottom:2%; width:12px; height:12px; border-radius:50%; background:#747f8d; border:2px solid #050505; display:none; z-index:2; }
+    .status-dot.online { background:#3ba55d; display:block; } .status-dot.idle { background:#faa61a; display:block; } .status-dot.dnd { background:#ed4245; display:block; } .status-dot.offline { background:#747f8d; display:block; }
     .friend:hover .friend-avatar { filter:grayscale(0); transform:translateY(-2px); border-color:#757575; }
     .avatar-wrap { position:relative; flex:none; width:clamp(53px,4.7vw,74px); height:clamp(53px,4.7vw,74px); margin-bottom:4px; }
     .friend-avatar { display:grid; place-items:center; width:100%; height:100%; border:1px solid #343434; border-radius:50%; overflow:hidden; background:radial-gradient(circle at 35% 25%,#595959,#191919 52%,#080808); box-shadow:0 0 14px #ffffff0a; filter:grayscale(.40); transition:filter .2s,transform .2s,border-color .2s; }
@@ -118,6 +120,21 @@
       .character { width:46vw; }
     }
     @media (prefers-reduced-motion:reduce) { .stars,.cursor { animation:none; } .friend-avatar { transition:none; } }
+
+    :root { --glow:#ffffff; }
+    .soft { --glow:#f6d3e3; }
+    .prompt-row { display:flex; align-items:baseline; cursor:text; }
+    .prompt-row input { flex:1; min-width:0; background:transparent; border:0; outline:0; padding:0; color:#d6d6d6; font:inherit; caret-color:var(--glow); text-shadow:0 0 6px color-mix(in srgb,var(--glow) 45%,transparent); }
+    .terminal { cursor:text; transition:box-shadow .25s,border-color .25s; box-shadow:0 0 0 1px #0b0b0b,0 0 22px color-mix(in srgb,var(--glow) 14%,transparent),0 0 60px color-mix(in srgb,var(--glow) 6%,transparent),0 12px 60px #0008; }
+    .terminal:focus-within { border-color:#7a7a7a; box-shadow:0 0 0 1px #0b0b0b,0 0 34px color-mix(in srgb,var(--glow) 28%,transparent),0 0 90px color-mix(in srgb,var(--glow) 10%,transparent),0 12px 60px #0008; }
+    .terminal-content .bright, .terminal-content .red { text-shadow:0 0 8px color-mix(in srgb,currentColor 55%,transparent); }
+    .friend { border-color:#2b2b2b; box-shadow:0 0 16px color-mix(in srgb,var(--glow) 11%,transparent),inset 0 0 14px color-mix(in srgb,var(--glow) 4%,transparent); }
+    .friend:hover { border-color:#c4c4c4; box-shadow:0 0 28px color-mix(in srgb,var(--glow) 32%,transparent),0 0 60px color-mix(in srgb,var(--glow) 12%,transparent),inset 0 0 18px color-mix(in srgb,var(--glow) 9%,transparent); }
+    .friend-avatar { box-shadow:0 0 18px color-mix(in srgb,var(--glow) 22%,transparent); }
+    .friend-name { text-shadow:0 0 8px color-mix(in srgb,var(--glow) 40%,transparent); }
+    .music { border-color:#333; box-shadow:0 0 20px color-mix(in srgb,var(--glow) 13%,transparent),0 8px 32px #000a; }
+    .brand { text-shadow:0 0 10px color-mix(in srgb,var(--glow) 45%,transparent); }
+    .theme:hover { box-shadow:0 0 14px color-mix(in srgb,var(--glow) 25%,transparent); }
   </style>
 </head>
 <body class="booting">
@@ -151,7 +168,7 @@
   <section class="music" aria-label="Music player">
     <div class="track">
       <div class="cover" aria-hidden="true"></div>
-      <div class="track-meta"><div class="track-name" id="track">suka playlist (beta)</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
+      <div class="track-meta"><div class="track-name" id="track">suka.mp3</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
     </div>
     <div class="controls">
       <label for="file" title="Play your own audio instead" tabindex="0" role="button" aria-label="Select audio file">＋</label>
@@ -203,54 +220,134 @@
     })();
 
     const terminal=document.getElementById('terminalText');
-    terminal.innerHTML=`<p class="faint">guest@suka.rest:~$ nmap</p>
-<p class="red">Under my control</p>
-<p class="bright">suka.rest's Nmap 7.95</p>
-<p>Starting Nmap 7.95 ( https://nmap.org )</p>
-<p>Nmap scan report for suka.rest</p>
-<p>Host is up (0.045s latency).</p>
-<p>PORT     STATE  SERVICE   VERSION</p>
-<p>22/tcp   open   ssh       OpenSSH</p>
-<p>80/tcp   open   http      nginx</p>
-<p>443/tcp  open   https     nginx</p>
-<p>3306/tcp open   mysql     MySQL</p>
-<p>6379/tcp open   redis     Redis</p>
-<p class="faint">Nmap done: 1 IP address (1 host up) scanned</p>
-<br><p class="faint">guest@suka.rest:~$ <span class="cursor">█</span></p>`;
+    const box=terminal.closest('.terminal');
+    const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const PROMPT='guest@suka.rest:~$';
+    const cmdHistory=[]; let hIdx=0, busy=false;
+    const log=document.createElement('div');
+    const promptRow=document.createElement('label'); promptRow.className='prompt-row';
+    promptRow.innerHTML=`<span class="faint">${PROMPT}&nbsp;</span>`;
+    const input=document.createElement('input');
+    input.type='text'; input.id='termInput'; input.autocomplete='off'; input.spellcheck=false;
+    input.setAttribute('autocapitalize','off'); input.setAttribute('autocorrect','off'); input.setAttribute('aria-label','Terminal input');
+    promptRow.append(input); terminal.append(log,promptRow);
 
-    /* ---------- friends ---------- */
+    const toBottom=()=>{ box.scrollTop=box.scrollHeight; };
+    const print=(html,cls='')=>{ const p=document.createElement('p'); if(cls)p.className=cls; p.innerHTML=html===''?'&nbsp;':html; log.append(p); toBottom(); };
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    async function reveal(lines,delay=70){ busy=true; for(const [h,c] of lines){ print(h,c); await wait(delay); } busy=false; input.focus({preventScroll:true}); }
+
+    const NMAP=[
+      ['Under my control','red'],
+      ["suka.rest's Nmap 7.95",'bright'],
+      ['Starting Nmap 7.95 ( https://nmap.org )'],
+      ['Nmap scan report for suka.rest'],
+      ['Host is up (0.045s latency).'],
+      ['PORT     STATE  SERVICE   VERSION'],
+      ['22/tcp   open   ssh       OpenSSH'],
+      ['80/tcp   open   http      nginx'],
+      ['443/tcp  open   https     nginx'],
+      ['3306/tcp open   mysql     MySQL'],
+      ['6379/tcp open   redis     Redis'],
+      ['Nmap done: 1 IP address (1 host up) scanned','faint']
+    ];
+    const FILES={
+      'about.txt':['suka world — a little corner of the internet.'],
+      'friends.txt':()=>friendLines(),
+      'secret.txt':['nice try. 🖤']
+    };
+    const friendLines=()=>{
+      const list=Array.isArray(window.SUKA_FRIENDS)?window.SUKA_FRIENDS:[];
+      return list.length?list.map(f=>`${esc(f.name||'friend')}  <span class="faint">${esc(f.id||'')}</span>`):['no friends yet :('];
+    };
+    const COMMANDS=['help','nmap','whoami','ls','cat','friends','date','echo','clear','music','mood','neofetch','uname','ping','history','sudo','exit'];
+
+    function run(raw) {
+      print(`<span class="faint">${PROMPT}</span> ${esc(raw)}`);
+      raw=raw.trim(); if(!raw) return;
+      cmdHistory.push(raw); hIdx=cmdHistory.length;
+      const [cmd,...rest]=raw.split(/\s+/); const arg=rest.join(' ');
+      const say=(lines,cls)=>lines.forEach(l=>print(l,cls));
+      switch(cmd.toLowerCase()) {
+        case 'help': say(['commands:','  help       this list','  nmap       scan suka.rest','  whoami     who you are','  ls / cat   look around','  friends    the people I like','  music      play | pause | restart | status','  mood       change the mood','  neofetch   system info','  date       current time','  echo       repeat after me','  clear      wipe the screen'],'bright'); break;
+        case 'nmap': reveal(NMAP); break;
+        case 'whoami': say(['guest']); break;
+        case 'ls': say(['about.txt  friends.txt  secret.txt']); break;
+        case 'cat': {
+          const f=FILES[arg];
+          if(!arg) say(['cat: missing file name']);
+          else if(!f) say([`cat: ${esc(arg)}: No such file or directory`]);
+          else say(typeof f==='function'?f():f);
+          break; }
+        case 'friends': say(friendLines()); break;
+        case 'date': say([new Date().toString()]); break;
+        case 'echo': say([esc(arg)||'&nbsp;']); break;
+        case 'clear': log.replaceChildren(); break;
+        case 'uname': say(['SukaOS 7.95 suka.rest x86_64']); break;
+        case 'ping': reveal([['PING suka.rest: 56 data bytes'],['64 bytes: icmp_seq=0 time=0.045 ms'],['64 bytes: icmp_seq=1 time=0.044 ms'],['64 bytes: icmp_seq=2 time=0.046 ms'],['--- 3 packets transmitted, 3 received, 0% loss','faint']],220); break;
+        case 'mood': document.body.classList.toggle('soft'); say(['mood changed.']); break;
+        case 'history': say(cmdHistory.map((c,i)=>`${String(i+1).padStart(3,' ')}  ${esc(c)}`)); break;
+        case 'sudo': say(['guest is not in the sudoers file. This incident will be reported.'],'red'); break;
+        case 'exit': say(['there is no escape. 🖤']); break;
+        case 'neofetch': say(['<span class="red">guest</span>@<span class="red">suka.rest</span>','-----------------','OS:      SukaOS 7.95','Shell:   suka-sh','Uptime:  forever','Theme:   '+(document.body.classList.contains('soft')?'soft':'dark'),'Friends: '+((window.SUKA_FRIENDS||[]).length)],'bright'); break;
+        case 'music': {
+          const a=document.getElementById('audio'); const sub=arg.toLowerCase();
+          if(sub==='play') { a.play().catch(()=>{}); say(['playing.']); }
+          else if(sub==='pause') { a.pause(); say(['paused.']); }
+          else if(sub==='restart') { a.currentTime=0; a.play().catch(()=>{}); say(['restarted.']); }
+          else if(sub==='status'||!sub) say([`now: ${esc(document.getElementById('track').textContent)} (${a.paused?'paused':'playing'})`]);
+          else say(['usage: music play | pause | restart | status']);
+          break; }
+        default: say([`${esc(cmd)}: command not found. try <span class="bright">help</span>`]);
+      }
+    }
+    input.addEventListener('keydown',e=>{
+      if(busy&&e.key!=='Tab') { if(e.key==='Enter') e.preventDefault(); }
+      if(e.key==='Enter') { if(busy) return; const v=input.value; input.value=''; run(v); }
+      else if(e.key==='ArrowUp') { e.preventDefault(); if(hIdx>0){ hIdx--; input.value=cmdHistory[hIdx]; } }
+      else if(e.key==='ArrowDown') { e.preventDefault(); if(hIdx<cmdHistory.length-1){ hIdx++; input.value=cmdHistory[hIdx]; } else { hIdx=cmdHistory.length; input.value=''; } }
+      else if(e.key==='Tab') { e.preventDefault(); const m=COMMANDS.filter(c=>c.startsWith(input.value.toLowerCase())); if(input.value&&m.length===1) input.value=m[0]+' '; }
+      else if(e.key==='l'&&e.ctrlKey) { e.preventDefault(); log.replaceChildren(); }
+    });
+    box.addEventListener('click',()=>{ if(!getSelection().toString()) input.focus({preventScroll:true}); });
+    print(`<span class="faint">${PROMPT}</span> nmap`);
+    NMAP.forEach(([h,c])=>print(h,c));
+    print('type <span class="bright">help</span> to see what I can do.','faint');
+
     const validId=id=>/^\d{17,22}$/.test(String(id||''));
     const friendNav=document.getElementById('friends');
     const CDN='https://cdn.discordapp.com';
+    const CACHE_MS=30*60*1000;
 
-    function loadImage(url,onLoad) {
-      if(!url) return;
-      const img=document.createElement('img');
-      img.alt=''; img.loading='lazy'; img.referrerPolicy='no-referrer';
-      img.onload=()=>onLoad(img);
-      img.onerror=()=>img.remove();
-      img.src=url;
-    }
-    function avatarUrl(user) {
-      if(!user?.id) return null;
-      if(user.avatar) return `${CDN}/avatars/${user.id}/${user.avatar}.${user.avatar.startsWith('a_')?'gif':'png'}?size=128`;
-      try { return `${CDN}/embed/avatars/${Number((BigInt(user.id)>>22n)%6n)}.png`; } catch(_) { return null; }
-    }
-    function decoUrl(user) {
-      const asset=user?.avatar_decoration_data?.asset;
-      return asset?`${CDN}/avatar-decoration-presets/${asset}.png?size=128&passthrough=true`:null;
-    }
+    const defaultAvatar=id=>{ try { return `${CDN}/embed/avatars/${Number((BigInt(id)>>22n)%6n)}.png`; } catch(_) { return `${CDN}/embed/avatars/0.png`; } };
+    const hashAvatar=(id,hash)=>hash?`${CDN}/avatars/${id}/${hash}.${hash.startsWith('a_')?'gif':'png'}?size=256`:null;
+    const decoFrom=asset=>asset?`${CDN}/avatar-decoration-presets/${asset}.png?size=128&passthrough=true`:null;
+    const timeout=(url,ms)=>fetch(url,{signal:AbortSignal.timeout(ms)}).then(r=>r.ok?r.json():null).catch(()=>null);
+
+    const sources={
+      own: async id=>{ const u=await timeout(`/api/discord/${id}`,3500); if(!u||!u.id) return null;
+        return {username:u.username,global_name:u.global_name,avatar:hashAvatar(u.id,u.avatar),deco:decoFrom(u.avatar_decoration_data?.asset)}; },
+      lanyard: async id=>{ const j=await timeout(`https://api.lanyard.rest/v1/users/${id}`,5000); const u=j?.success&&j.data?.discord_user; if(!u) return null;
+        return {username:u.username,global_name:u.global_name,avatar:hashAvatar(u.id,u.avatar),deco:decoFrom(u.avatar_decoration_data?.asset),status:j.data.discord_status}; },
+      lookup: async id=>{ const u=await timeout(`https://discordlookup.mesalytic.moe/v1/user/${id}`,5000); if(!u||!u.id) return null;
+        return {username:u.username,global_name:u.global_name,avatar:u.avatar?.link||hashAvatar(u.id,u.avatar?.id),deco:decoFrom(u.avatar_decoration?.asset)}; }
+    };
     async function getDiscordUser(id) {
-      try {
-        const r=await fetch(`/api/discord/${id}`,{signal:AbortSignal.timeout(3500)});
-        if(r.ok) { const u=await r.json(); if(u&&u.id) return u; }
-      } catch(_) {}
-      try {
-        const r=await fetch(`https://api.lanyard.rest/v1/users/${id}`,{signal:AbortSignal.timeout(5000)});
-        if(!r.ok) return null;
-        const j=await r.json();
-        return j.success?j.data?.discord_user:null;
-      } catch(_) { return null; }
+      try { const c=JSON.parse(localStorage.getItem('suka:'+id)||'null'); if(c&&Date.now()-c.t<CACHE_MS) return c.u; } catch(_) {}
+      const results=(await Promise.all(Object.values(sources).map(f=>f(id).catch(()=>null)))).filter(Boolean);
+      if(!results.length) return null;
+      const pick=k=>results.map(r=>r[k]).find(Boolean)||null;
+      const user={username:pick('username'),global_name:pick('global_name'),avatar:pick('avatar'),deco:pick('deco'),status:pick('status')};
+      try { localStorage.setItem('suka:'+id,JSON.stringify({t:Date.now(),u:user})); } catch(_) {}
+      return user;
+    }
+    function loadImage(url,onLoad,onFail) {
+      if(!url) { onFail&&onFail(); return; }
+      const img=new Image();
+      img.alt=''; img.referrerPolicy='no-referrer'; img.decoding='async';
+      img.onload=()=>onLoad(img);
+      img.onerror=()=>onFail&&onFail();
+      img.src=url;
     }
     function renderFriends() {
       friendNav.replaceChildren();
@@ -258,6 +355,7 @@
       entries.forEach((person,index)=>{
         const id=String(person.id||'').trim();
         const hasId=validId(id);
+        const label=String(person.name||'').trim();
         const link=document.createElement('a');
         link.className='friend';
         if(hasId) { link.href=`https://discord.com/users/${id}`; link.target='_blank'; link.rel='noopener noreferrer'; }
@@ -266,29 +364,30 @@
         const wrap=document.createElement('span'); wrap.className='avatar-wrap';
         const circle=document.createElement('span'); circle.className='friend-avatar';
         const initial=document.createElement('span'); initial.className='placeholder';
-        const label=String(person.name||'').trim();
         initial.textContent=label.charAt(0)||'F';
-        circle.append(initial); wrap.append(circle);
+        circle.append(initial);
+        const dot=document.createElement('span'); dot.className='status-dot';
+        wrap.append(circle,dot);
 
-        const name=document.createElement('span'); name.className='friend-name';
-        name.textContent=label||`friend ${index+1}`;
-        const uname=document.createElement('span'); uname.className='friend-user'; uname.textContent='@…';
+        const name=document.createElement('span'); name.className='friend-name'; name.textContent=label||`friend ${index+1}`;
+        const uname=document.createElement('span'); uname.className='friend-user'; uname.textContent=hasId?'@…':'';
         const idEl=document.createElement('span'); idEl.className='friend-id'; idEl.textContent=id||'no id';
         link.append(wrap,name,uname,idEl); friendNav.append(link);
 
-        if(person.avatar) loadImage(String(person.avatar),img=>circle.replaceChildren(img));
-        if(hasId) {
-          getDiscordUser(id).then(user=>{
-            if(!user) { uname.textContent=''; return; }
-            if(!person.avatar) loadImage(avatarUrl(user),img=>circle.replaceChildren(img));
-            const deco=decoUrl(user);
-            if(deco) loadImage(deco,img=>{ img.className='avatar-deco'; wrap.append(img); });
-            const handle=user.username||'';
-            uname.textContent=handle?`@${handle}`:'';
-            if(!label) name.textContent=user.global_name||handle||name.textContent;
-            link.title=`View ${user.global_name||handle||'friend'} on Discord`;
-          });
-        } else uname.textContent='';
+        const show=img=>circle.replaceChildren(img);
+        if(person.avatar) loadImage(String(person.avatar),show);
+        else if(hasId) loadImage(defaultAvatar(id),show);
+        if(!hasId) return;
+
+        getDiscordUser(id).then(user=>{
+          if(!user) { uname.textContent=''; return; }
+          if(!person.avatar&&user.avatar) loadImage(user.avatar,show);
+          if(user.deco) loadImage(user.deco,img=>{ img.className='avatar-deco'; wrap.append(img); });
+          if(user.status) dot.className='status-dot '+user.status;
+          uname.textContent=user.username?`@${user.username}`:'';
+          if(!label) name.textContent=user.global_name||user.username||name.textContent;
+          link.title=`View ${user.global_name||user.username||'friend'} on Discord`;
+        });
       });
     }
     renderFriends();
