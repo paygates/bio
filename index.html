@@ -140,6 +140,25 @@
     .music { border-color:#333; box-shadow:0 0 20px color-mix(in srgb,var(--glow) 13%,transparent),0 8px 32px #000a; }
     .brand { text-shadow:0 0 10px color-mix(in srgb,var(--glow) 45%,transparent); }
     .theme:hover { box-shadow:0 0 14px color-mix(in srgb,var(--glow) 25%,transparent); }
+
+    .terminal { resize:both; max-height:90vh; min-width:260px; min-height:140px; }
+    .terminal-bar { cursor:grab; user-select:none; position:sticky; top:0; z-index:1; }
+    .terminal-bar:active { cursor:grabbing; }
+    .win-x { background:transparent; border:0; color:#777; cursor:pointer; font:14px monospace; padding:0 4px; }
+    .win-x:hover { color:#fff; }
+    .hdr-left { position:absolute; left:clamp(12px,2vw,34px); top:0; display:flex; gap:6px; pointer-events:auto; }
+    .theme.hdr { position:static; }
+    .a-b { color:#e0e0e0; font-weight:700; } .a-r { color:#d4606c; } .a-g { color:#74c48c; } .a-y { color:#d9b865; } .a-bl { color:#7aa2f7; } .a-c { color:#6cc4d4; } .a-f { color:#666; }
+    .browser { position:absolute; z-index:20; left:22%; top:14%; width:clamp(320px,52vw,900px); height:62vh; min-width:280px; min-height:200px; display:flex; flex-direction:column; background:#050505f2; border:1px solid #2e2e2e; resize:both; overflow:hidden; box-shadow:0 0 28px color-mix(in srgb,var(--glow) 16%,transparent),0 12px 60px #000a; }
+    .browser[hidden] { display:none; }
+    .browser-nav { display:flex; gap:4px; padding:5px; background:#0c0c0c; border-bottom:1px solid #242424; }
+    .browser-nav button { background:transparent; border:1px solid #2a2a2a; color:#aaa; cursor:pointer; padding:2px 8px; font:13px monospace; }
+    .browser-nav button:hover { color:#fff; border-color:#777; }
+    .browser-nav input { flex:1; min-width:0; background:#050505; border:1px solid #2a2a2a; color:#ccc; padding:3px 8px; font:12px "Courier New",monospace; outline:0; }
+    .browser-nav input:focus { border-color:#7a7a7a; }
+    .browser iframe { flex:1; width:100%; border:0; background:#fff; min-height:0; }
+    .browser-status { font:9px monospace; color:#555; padding:2px 8px; background:#0c0c0c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    @media (max-width:680px) { .browser { left:3%; top:100px; width:94%; height:60vh; } .hdr-left { top:44px; left:12px; } }
   </style>
 </head>
 <body class="booting">
@@ -154,27 +173,38 @@
   <div class="stage">
     <header class="site-header">
       <a class="brand" href="#home">✦ SUKA WORLD</a>
+      <div class="hdr-left"><button class="theme hdr" id="openTerm" type="button">TERMINAL</button><button class="theme hdr" id="openBrowser" type="button">BROWSER</button></div>
       <button class="theme" id="theme" type="button">CHANGE MOOD</button>
     </header>
     <nav class="friends" id="friends" aria-label="Friends on Discord"></nav>
     <main>
-      <section class="terminal" aria-label="Terminal window">
+      <section class="terminal" id="termWin" aria-label="Terminal window">
         <div class="terminal-bar">
           <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
           <span>suka.rest — 80x24</span>
-          <span aria-hidden="true">×</span>
+          <button class="win-x" id="termClose" type="button" aria-label="Hide terminal">×</button>
         </div>
         <div class="terminal-content" id="terminalText"></div>
       </section>
       <img class="character" src="SUKA.gif" alt="Animated anime character" draggable="false">
     </main>
+    <section class="window browser" id="browserWin" aria-label="Browser" hidden>
+      <div class="terminal-bar" id="browserBar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>suka browser</span><button class="win-x" id="browserClose" type="button" aria-label="Close browser">×</button></div>
+      <div class="browser-nav">
+        <button type="button" id="bBack" aria-label="Back">←</button><button type="button" id="bFwd" aria-label="Forward">→</button><button type="button" id="bReload" aria-label="Reload">↻</button>
+        <input id="bUrl" type="text" placeholder="type a url or search" autocomplete="off" spellcheck="false" aria-label="Address">
+        <button type="button" id="bOut" aria-label="Open in a new tab" title="Open the real site in a new tab">↗</button>
+      </div>
+      <iframe id="bFrame" title="Browser view" sandbox="allow-scripts allow-forms allow-popups" srcdoc="<body style='background:#050505;color:#777;font:13px monospace;padding:22px'>type a url above, or run <b>browse example.com</b> in the terminal.</body>"></iframe>
+      <div class="browser-status" id="bStat"></div>
+    </section>
     <div class="status">SUKA WORLD · SYSTEM ONLINE</div>
   </div>
   <section class="music" aria-label="Music player">
     <div class="playlist" id="playlist" hidden></div>
     <div class="track">
       <div class="cover" aria-hidden="true"></div>
-      <div class="track-meta"><div class="track-name" id="track">suka</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
+      <div class="track-meta"><div class="track-name" id="track">suka.mp3</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
     </div>
     <div class="controls">
       <label for="file" title="Add your own audio to the playlist" tabindex="0" role="button" aria-label="Add audio file">＋</label>
@@ -230,102 +260,285 @@
     })();
 
     const terminal=document.getElementById('terminalText');
-    const box=terminal.closest('.terminal');
+    const box=document.getElementById('termWin');
     const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const PROMPT='guest@suka.rest:~$';
-    const cmdHistory=[]; let hIdx=0, busy=false;
+    const stripAnsi=s=>String(s).replace(/\x1b\[[0-9;]*m/g,'');
+    const ANSI_CLS={'1':'a-b','31':'a-r','32':'a-g','33':'a-y','34':'a-bl','36':'a-c','90':'a-f'};
+    function ansi(s) {
+      let out='',open=0;
+      for(const p of String(s).split(/(\x1b\[[0-9;]*m)/)) {
+        const m=p.match(/^\x1b\[([0-9;]*)m$/);
+        if(!m) { out+=esc(p); continue; }
+        for(;open>0;open--) out+='</span>';
+        const c=ANSI_CLS[m[1]]; if(c) { out+=`<span class="${c}">`; open++; }
+      }
+      for(;open>0;open--) out+='</span>';
+      return out;
+    }
+    class Err extends Error { constructor(m,code=1){ super(m); this.code=code; } }
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+    const F=(c='')=>({t:'f',c,m:Date.now()}), D=(ch={})=>({t:'d',ch,m:Date.now()});
+    const friendsTxt=()=>(window.SUKA_FRIENDS||[]).map(f=>`${f.name||'friend'}  ${f.id||''}${f.note?'  # '+f.note:''}`).join('\n')+'\n';
+    const defaultFs=()=>D({home:D({guest:D({'about.txt':F('suka world — a little corner of the internet.\n'),'secret.txt':F('nice try. 🖤\n'),notes:D({'todo.txt':F('- add more songs\n- touch grass\n')})})}),etc:D({hostname:F('suka.rest\n'),'os-release':F('NAME="SukaOS"\nVERSION="7.95"\n')}),tmp:D(),var:D({log:D()})});
+    let root=null; try { root=JSON.parse(localStorage.getItem('suka:fs')||'null'); } catch(_) {}
+    if(!root||root.t!=='d') root=defaultFs();
+    try { root.ch.home.ch.guest.ch['friends.txt']=F(friendsTxt()); } catch(_) {}
+    const saveFs=()=>{ try { localStorage.setItem('suka:fs',JSON.stringify(root)); } catch(_) {} };
+    const env={USER:'guest',HOME:'/home/guest',HOSTNAME:'suka.rest',SHELL:'/bin/suka-sh',PWD:'/home/guest',TERM:'xterm-256color',LANG:'en_US.UTF-8'};
+    const aliases={ll:'ls -l',la:'ls -a'};
+    let cwd='/home/guest', lastCode=0, aborted=false, busy=false;
+    const norm=p=>{
+      if(p==null||p==='') return cwd;
+      if(p==='~'||p.startsWith('~/')) p=env.HOME+p.slice(1);
+      const st=[]; for(const s of (p.startsWith('/')?p:cwd+'/'+p).split('/')) { if(!s||s==='.') continue; if(s==='..') st.pop(); else st.push(s); }
+      return '/'+st.join('/');
+    };
+    const node=p=>{ let n=root; for(const s of norm(p).split('/').filter(Boolean)) { if(n.t!=='d'||!n.ch[s]) return null; n=n.ch[s]; } return n; };
+    const parentOf=p=>{ const full=norm(p), i=full.lastIndexOf('/'); return {dir:node(full.slice(0,i)||'/'),name:full.slice(i+1),full}; };
+    function writeFile(path,content,append=false) {
+      const p=parentOf(path);
+      if(!p.dir||p.dir.t!=='d'||!p.name) throw new Err(`${path}: No such file or directory`);
+      const ex=p.dir.ch[p.name]; if(ex&&ex.t==='d') throw new Err(`${path}: Is a directory`);
+      p.dir.ch[p.name]={t:'f',c:(append&&ex?ex.c:'')+content,m:Date.now()}; saveFs();
+    }
+    function readText(path) {
+      const n=node(path);
+      if(!n) throw new Err(`${path}: No such file or directory`);
+      if(n.t==='d') throw new Err(`${path}: Is a directory`);
+      return n.c;
+    }
+    const fl=a=>{ const f=new Set(),r=[]; a.forEach(x=>/^-[a-zA-Z]+$/.test(x)?[...x.slice(1)].forEach(c=>f.add(c)):r.push(x)); return {f,r}; };
+    const lines=t=>{ const l=String(t).split('\n'); if(l.length&&l[l.length-1]==='') l.pop(); return l; };
+    const globRe=g=>new RegExp('^'+g.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$');
+    const clone=n=>JSON.parse(JSON.stringify(n));
+
+    async function httpReq({url,method,headers,body,preferProxy}) {
+      const viaProxy=async()=>{ const r=await fetch('/api/curl',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,method,headers,body})}); if(!r.ok) throw new Error('proxy '+r.status); return r.json(); };
+      const direct=async()=>{ const r=await fetch(url,{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return {url:r.url,status:r.status,statusText:r.statusText,http:'HTTP/1.1',headers:[...r.headers.entries()],body:method==='HEAD'?'':await r.text()}; };
+      let last; for(const f of (preferProxy?[viaProxy,direct]:[direct,viaProxy])) { try { return await f(); } catch(e) { last=e; } }
+      throw last;
+    }
+    const DNS={A:1,AAAA:28,CNAME:5,NS:2,MX:15,TXT:16}, DNSR=Object.fromEntries(Object.entries(DNS).map(([k,v])=>[v,k]));
+    async function doh(name,type) {
+      const r=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`,{headers:{accept:'application/dns-json'},signal:AbortSignal.timeout(8000)});
+      if(!r.ok) throw new Err('DNS query failed'); return r.json();
+    }
+
+    const HELP=[
+      ['help','list commands'],['man','man <cmd>: about a command'],['clear','clear the screen (Ctrl+L)'],['echo','print text, supports > and >>'],
+      ['pwd / cd','where you are / move around'],['ls','list files (-a -l)'],['cat','show files (-n)'],['touch / mkdir / rmdir','create files and folders (-p)'],
+      ['rm / cp / mv','remove (-r -f), copy (-r), move'],['head / tail','first / last lines (-n N)'],['wc','count lines, words, bytes'],
+      ['grep','search text (-i -v -n -c)'],['sort / uniq','sort lines (-r -n -u), drop repeats'],['find','find files (-name)'],['tree','directory tree'],
+      ['env / export / unset','environment variables'],['alias / unalias','shortcuts'],['history','past commands'],['which','locate a command'],
+      ['whoami / id / hostname / uname','who and where'],['date / uptime / sleep / seq','time and counting'],['base64 / sha256sum','encode and hash (-d decodes)'],
+      ['curl','REAL web requests (-i -I -X -H -d -o)'],['wget','REAL download into a file'],['dig / nslookup / host','REAL DNS lookups'],
+      ['ping','REAL round-trip time over https'],['weather / myip','REAL lookups'],['browse / open','open the browser window'],
+      ['music','play | pause | next | prev | list | status'],['friends','list friends'],['mood','toggle theme'],['neofetch','system info'],
+      ['cowsay / fortune','fun'],['nmap / ps','(fake) scan and processes'],['sudo / exit / reboot','you know']
+    ];
+    const C={};
+    C.help=()=>'\x1b[1mcommands\x1b[0m  (pipes | and redirects > >> work, Tab completes, ↑ history)\n'+HELP.map(([n,d])=>'  '+n.padEnd(30)+'\x1b[90m'+d+'\x1b[0m').join('\n')+'\n';
+    C.man=a=>{ if(!a[0]) throw new Err('What manual page do you want?'); const h=HELP.find(([n])=>n.split(' / ').includes(a[0])); if(!h) throw new Err(`No manual entry for ${a[0]}`); return `${a[0]}: ${h[1]}\n`; };
+    C.clear=()=>{ log.replaceChildren(); return ''; };
+    C.echo=a=>{ let nl=true,e=false; while(a[0]==='-n'||a[0]==='-e') { if(a.shift()==='-n') nl=false; else e=true; } let s=a.join(' '); if(e) s=s.replace(/\\n/g,'\n').replace(/\\t/g,'\t'); return s+(nl?'\n':''); };
+    C.pwd=()=>cwd+'\n';
+    C.cd=a=>{ const t=a[0]||'~', n=node(t); if(!n) throw new Err(`cd: ${t}: No such file or directory`); if(n.t!=='d') throw new Err(`cd: ${t}: Not a directory`); cwd=norm(t); env.PWD=cwd; updatePrompt(); return ''; };
+    C.ls=a=>{
+      const {f,r}=fl(a); const targets=r.length?r:['.']; let out='';
+      targets.forEach((t,i)=>{
+        const n=node(t); if(!n) throw new Err(`ls: cannot access '${t}': No such file or directory`);
+        const items=n.t==='d'?Object.keys(n.ch).filter(k=>f.has('a')||!k.startsWith('.')).sort():[t];
+        const get=k=>n.t==='d'?n.ch[k]:n;
+        const fmt=k=>get(k).t==='d'?`\x1b[34m${k}\x1b[0m`:k;
+        if(targets.length>1) out+=(i?'\n':'')+t+':\n';
+        out+=f.has('l')?items.map(k=>{ const x=get(k); return `${x.t==='d'?'drwxr-xr-x':'-rw-r--r--'} guest guest ${String(x.t==='d'?4096:x.c.length).padStart(6)} ${new Date(x.m||0).toLocaleString('en',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})} ${fmt(k)}`; }).join('\n')+'\n':items.map(fmt).join('  ')+'\n';
+      });
+      return out;
+    };
+    C.cat=(a,inp)=>{ const {f,r}=fl(a); let t=r.length?r.map(readText).join(''):inp; if(f.has('n')) t=lines(t).map((l,i)=>String(i+1).padStart(6)+'  '+l).join('\n')+'\n'; return t; };
+    C.touch=a=>{ a.forEach(p=>{ const n=node(p); if(n) { n.m=Date.now(); saveFs(); } else writeFile(p,''); }); return ''; };
+    C.mkdir=a=>{ const {f,r}=fl(a); if(!r.length) throw new Err('mkdir: missing operand'); r.forEach(p=>{
+      if(f.has('p')) { let n=root; for(const s of norm(p).split('/').filter(Boolean)) { if(!n.ch[s]) n.ch[s]=D(); n=n.ch[s]; if(n.t!=='d') throw new Err(`mkdir: ${p}: Not a directory`); } }
+      else { const q=parentOf(p); if(!q.dir||q.dir.t!=='d') throw new Err(`mkdir: cannot create directory '${p}': No such file or directory`); if(q.dir.ch[q.name]) throw new Err(`mkdir: cannot create directory '${p}': File exists`); q.dir.ch[q.name]=D(); }
+    }); saveFs(); return ''; };
+    C.rmdir=a=>{ a.forEach(p=>{ const n=node(p),q=parentOf(p); if(!n) throw new Err(`rmdir: ${p}: No such file or directory`); if(n.t!=='d') throw new Err(`rmdir: ${p}: Not a directory`); if(Object.keys(n.ch).length) throw new Err(`rmdir: ${p}: Directory not empty`); delete q.dir.ch[q.name]; }); saveFs(); return ''; };
+    C.rm=a=>{ const {f,r}=fl(a); if(!r.length&&!f.has('f')) throw new Err('rm: missing operand'); r.forEach(p=>{
+      if(norm(p)==='/') throw new Err("rm: it is dangerous to operate recursively on '/'");
+      const n=node(p),q=parentOf(p);
+      if(!n) { if(f.has('f')) return; throw new Err(`rm: cannot remove '${p}': No such file or directory`); }
+      if(n.t==='d'&&!f.has('r')&&!f.has('R')) throw new Err(`rm: cannot remove '${p}': Is a directory`);
+      delete q.dir.ch[q.name];
+    }); if(cwd!=='/'&&!node(cwd)) { cwd='/'; updatePrompt(); } saveFs(); return ''; };
+    const copyMove=(a,move)=>{ const {f,r}=fl(a), name=move?'mv':'cp'; if(r.length<2) throw new Err(`${name}: missing destination file operand`);
+      const dst=r.pop(); r.forEach(s=>{ const n=node(s); if(!n) throw new Err(`${name}: cannot stat '${s}': No such file or directory`);
+        if(n.t==='d'&&!move&&!f.has('r')&&!f.has('R')) throw new Err(`${name}: -r not specified; omitting directory '${s}'`);
+        const d=node(dst); let target=norm(dst); if(d&&d.t==='d') target=norm(dst)+'/'+norm(s).split('/').pop();
+        if(target===norm(s)) return;
+        if(target.startsWith(norm(s)+'/')) throw new Err(`${name}: cannot copy '${s}' into itself`);
+        const q=parentOf(target); if(!q.dir||q.dir.t!=='d') throw new Err(`${name}: cannot create '${dst}': No such file or directory`);
+        q.dir.ch[q.name]=clone(n); if(move) { const sp=parentOf(s); delete sp.dir.ch[sp.name]; } }); saveFs(); return ''; };
+    C.cp=a=>copyMove(a,false); C.mv=a=>copyMove(a,true);
+    const headTail=(tail)=>(a,inp)=>{ let n=10; const fs=[]; for(let i=0;i<a.length;i++) { if(a[i]==='-n') n=+a[++i]; else if(/^-\d+$/.test(a[i])) n=+a[i].slice(1); else fs.push(a[i]); }
+      const l=lines(fs.length?fs.map(readText).join(''):inp); return (tail?l.slice(-n):l.slice(0,n)).join('\n')+'\n'; };
+    C.head=headTail(false); C.tail=headTail(true);
+    C.wc=(a,inp)=>{ const {f,r}=fl(a); const one=(t,n)=>{ const c=[(t.match(/\n/g)||[]).length,t.trim()?t.trim().split(/\s+/).length:0,new Blob([t]).size]; const pick=f.size?[f.has('l')&&c[0],f.has('w')&&c[1],f.has('c')&&c[2]].filter(x=>x!==false):c; return pick.map(x=>String(x).padStart(7)).join(' ')+(n?' '+n:'')+'\n'; }; return r.length?r.map(p=>one(readText(p),p)).join(''):one(inp,''); };
+    C.grep=(a,inp)=>{ const {f,r}=fl(a); const pat=r.shift(); if(pat==null) throw new Err('usage: grep [-ivnc] pattern [file...]');
+      let re; try { re=new RegExp(pat,f.has('i')?'i':''); } catch(_) { re=new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),f.has('i')?'i':''); }
+      const src=r.length?r.map(p=>[p,readText(p)]):[['',inp]]; let out=[],count=0;
+      src.forEach(([nm,t])=>lines(t).forEach((l,i)=>{ if(re.test(l)!==f.has('v')) { count++; out.push((src.length>1?nm+':':'')+(f.has('n')?(i+1)+':':'')+l); } }));
+      if(!count&&!f.has('c')) { lastCode=1; } return f.has('c')?count+'\n':out.length?out.join('\n')+'\n':''; };
+    C.sort=(a,inp)=>{ const {f,r}=fl(a); let l=lines(r.length?r.map(readText).join(''):inp); l.sort(f.has('n')?(x,y)=>parseFloat(x)-parseFloat(y):(x,y)=>x.localeCompare(y)); if(f.has('r')) l.reverse(); if(f.has('u')) l=l.filter((x,i)=>x!==l[i-1]); return l.join('\n')+(l.length?'\n':''); };
+    C.uniq=(a,inp)=>{ const l=lines(a.length?readText(a[0]):inp); return l.filter((x,i)=>x!==l[i-1]).join('\n')+'\n'; };
+    C.find=a=>{ let start='.',re=null; for(let i=0;i<a.length;i++) { if(a[i]==='-name') re=globRe(a[++i]||'*'); else if(!a[i].startsWith('-')) start=a[i]; }
+      const root0=node(start); if(!root0) throw new Err(`find: '${start}': No such file or directory`); const out=[];
+      const walk=(n,p)=>{ if(!re||re.test(p.split('/').pop())) out.push(p); if(n.t==='d') Object.keys(n.ch).sort().forEach(k=>walk(n.ch[k],(p==='/'?'':p)+'/'+k)); }; walk(root0,start.replace(/(.)\/$/,'$1')); return out.join('\n')+'\n'; };
+    C.tree=a=>{ const t=a[0]||'.', n=node(t); if(!n) throw new Err(`${t} [error opening dir]`); let out=t+'\n',d=0,fc=0;
+      const walk=(n,pre)=>{ const ks=Object.keys(n.ch).sort(); ks.forEach((k,i)=>{ const last=i===ks.length-1, c=n.ch[k]; out+=pre+(last?'└── ':'├── ')+(c.t==='d'?`\x1b[34m${k}\x1b[0m`:k)+'\n'; if(c.t==='d') { d++; walk(c,pre+(last?'    ':'│   ')); } else fc++; }); };
+      if(n.t==='d') walk(n,''); return out+`\n${d} directories, ${fc} files\n`; };
+    C.whoami=()=>'guest\n'; C.id=()=>'uid=1000(guest) gid=1000(guest) groups=1000(guest)\n'; C.hostname=()=>'suka.rest\n';
+    C.uname=a=>a.includes('-a')?'SukaOS suka.rest 7.95 #1 SMP x86_64 GNU/Browser\n':'SukaOS\n';
+    C.date=a=>a[0]==='+%s'?Math.floor(Date.now()/1000)+'\n':new Date().toString()+'\n';
+    C.uptime=()=>`up ${Math.max(1,Math.round(performance.now()/60000))} min,  1 user,  load average: 0.00, 0.01, 0.00\n`;
+    C.sleep=async a=>{ const s=parseFloat(a[0]); if(!(s>=0)) throw new Err('sleep: invalid time interval'); for(let t=0;t<s*1000;t+=100) { if(aborted) throw new Err('',130); await sleep(100); } return ''; };
+    C.seq=a=>{ const n=a.map(Number); const [s,e]=n.length>1?[n[0],n[1]]:[1,n[0]]; if(!isFinite(s)||!isFinite(e)) throw new Err('seq: invalid argument'); const o=[]; for(let i=s;i<=e&&o.length<10000;i++) o.push(i); return o.join('\n')+'\n'; };
+    C.env=()=>Object.entries(env).map(([k,v])=>`${k}=${v}`).join('\n')+'\n';
+    C.export=a=>{ if(!a.length) return C.env(); a.forEach(s=>{ const i=s.indexOf('='); if(i>0) env[s.slice(0,i)]=s.slice(i+1); }); return ''; };
+    C.unset=a=>{ a.forEach(k=>delete env[k]); return ''; };
+    C.alias=a=>{ if(!a.length) return Object.entries(aliases).map(([k,v])=>`alias ${k}='${v}'`).join('\n')+'\n'; a.forEach(s=>{ const i=s.indexOf('='); if(i>0) aliases[s.slice(0,i)]=s.slice(i+1); else if(aliases[s]) return; else throw new Err(`alias: ${s}: not found`); }); return ''; };
+    C.unalias=a=>{ a.forEach(k=>delete aliases[k]); return ''; };
+    C.history=()=>cmdHistory.map((c,i)=>String(i+1).padStart(4)+'  '+c).join('\n')+'\n';
+    C.which=a=>{ if(!a[0]) return ''; if(!C[a[0]]) { lastCode=1; return ''; } return '/usr/bin/'+a[0]+'\n'; };
+    C.ps=()=>'  PID TTY          TIME CMD\n    1 ?        00:00:01 suka-init\n   42 pts/0    00:00:00 suka-sh\n  '+(100+cmdHistory.length)+' pts/0    00:00:00 ps\n';
+    C.base64=(a,inp)=>{ const {f,r}=fl(a); const t=r.length?r.join(' '):inp.replace(/\n$/,''); try { return (f.has('d')?decodeURIComponent(escape(atob(t))):btoa(unescape(encodeURIComponent(t))))+'\n'; } catch(_) { throw new Err('base64: invalid input'); } };
+    C.sha256sum=async(a,inp)=>{ const t=a.length?readText(a[0]):inp; const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')+'  '+(a[0]||'-')+'\n'; };
+    C.cowsay=a=>{ const s=a.join(' ')||'moo'; return ` ${'_'.repeat(s.length+2)}\n< ${s} >\n ${'-'.repeat(s.length+2)}\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||\n`; };
+    C.fortune=()=>['You will find a bug in production on a Friday.','Today is a good day to touch grass.','A semicolon saves nine.','The cache is always stale.','Real ones read the logs.'][Math.floor(Math.random()*5)]+'\n';
+    C.neofetch=()=>`\x1b[31mguest\x1b[0m@\x1b[31msuka.rest\x1b[0m\n-----------------\nOS:        SukaOS 7.95\nBrowser:   ${(navigator.userAgent.match(/(Firefox|Edg|Chrome|Safari)\/[\d.]+/)||['unknown'])[0]}\nScreen:    ${innerWidth}x${innerHeight}\nUptime:    ${Math.max(1,Math.round(performance.now()/60000))} min\nTheme:     ${document.body.classList.contains('soft')?'soft':'dark'}\nFriends:   ${(window.SUKA_FRIENDS||[]).length}\nCWD:       ${cwd}\n`;
+    C.friends=()=>friendsTxt();
+    C.mood=()=>{ document.body.classList.toggle('soft'); return 'mood changed.\n'; };
+    C.nmap=async(a,inp,x)=>{ const h=a.find(s=>!s.startsWith('-'))||'suka.rest'; const L=['Starting Nmap 7.95 ( https://nmap.org )',`Nmap scan report for ${h}`,'Host is up (0.045s latency).','PORT     STATE  SERVICE   VERSION','22/tcp   open   ssh       OpenSSH','80/tcp   open   http      nginx','443/tcp  open   https     nginx','3306/tcp open   mysql     MySQL','6379/tcp open   redis     Redis','','Nmap done: 1 IP address (1 host up) scanned (simulated)']; for(const l of L) { x.live(l); await sleep(60); } return ''; };
+    C.sudo=a=>{ if(a.join(' ').includes('rm -rf /')) throw new Err('nice try.'); throw new Err('guest is not in the sudoers file. This incident will be reported.'); };
+    C.exit=()=>{ box.hidden=true; return 'logout\n'; };
+    C.reboot=()=>{ setTimeout(()=>location.reload(),300); return 'rebooting…\n'; };
+    C.browse=a=>{ if(!a.length) throw new Err('usage: browse <url or search words>'); browse(a.join(' ')); return `opening ${a.join(' ')} in the browser window…\n`; };
+    C.open=C.browse;
+    C.music=a=>{ const au=document.getElementById('audio'), s=(a[0]||'status').toLowerCase();
+      if(s==='play') { au.play().catch(()=>{}); return 'playing.\n'; } if(s==='pause') { au.pause(); return 'paused.\n'; }
+      if(s==='next') { next(); return 'next track.\n'; } if(s==='prev') { prev(); return 'previous track.\n'; }
+      if(s==='list') return playlist.map((t,i)=>`${i===cur?'▸':' '} ${i+1}. ${t.title}`).join('\n')+'\n';
+      if(s==='status') return `now: ${document.getElementById('track').textContent} (${au.paused?'paused':'playing'})\n`;
+      throw new Err('usage: music play | pause | next | prev | list | status'); };
+    C.curl=async a=>{
+      let url,method,headers={},body,incl=false,head=false,outFile,remote=false;
+      for(let i=0;i<a.length;i++) { const s=a[i];
+        if(s==='-X'||s==='--request') method=a[++i]; else if(s==='-H'||s==='--header') { const h=a[++i]||'',k=h.indexOf(':'); if(k>0) headers[h.slice(0,k).trim()]=h.slice(k+1).trim(); }
+        else if(s==='-d'||s==='--data'||s==='--data-raw') body=a[++i]; else if(s==='-o'||s==='--output') outFile=a[++i]; else if(s==='-O') remote=true;
+        else if(/^-[a-zA-Z]+$/.test(s)) { for(const c of s.slice(1)) { if(c==='i') incl=true; else if(c==='I') head=true; } } else url=s; }
+      if(!url) throw new Err('curl: no URL specified!',2);
+      if(!/^[a-z]+:\/\//i.test(url)) url='https://'+url;
+      method=(method||(head?'HEAD':body!=null?'POST':'GET')).toUpperCase();
+      if(body!=null&&!Object.keys(headers).some(k=>k.toLowerCase()==='content-type')) headers['Content-Type']='application/x-www-form-urlencoded';
+      let res; try { res=await httpReq({url,method,headers,body,preferProxy:incl||head}); } catch(_) { throw new Err(`curl: (6) Could not reach ${url.replace(/^https?:\/\//,'').split('/')[0]}`,6); }
+      if(outFile||remote) { const nm=outFile||(url.split('?')[0].split('/').filter(Boolean).pop()||'index.html'); writeFile(nm,res.body); return `saved ${nm} (${res.body.length} bytes)\n`; }
+      let out=(incl||head)?`${res.http||'HTTP/1.1'} ${res.status} ${res.statusText||''}\n`+res.headers.map(([k,v])=>`${k}: ${v}`).join('\n')+'\n\n':'';
+      if(!head) out+=res.body.length>200000?res.body.slice(0,200000)+'\n[output truncated]':res.body;
+      return out.endsWith('\n')?out:out+'\n'; };
+    C.wget=a=>{ const u=a.find(s=>!s.startsWith('-')); if(!u) throw new Err('wget: missing URL',1); return C.curl(['-O',u]); };
+    C.dig=async a=>{ let t='A',n; a.forEach(s=>{ if(DNS[s.toUpperCase()]) t=s.toUpperCase(); else if(!s.startsWith('-')&&!s.startsWith('@')) n=s; }); if(!n) throw new Err('usage: dig [type] <name>');
+      const j=await doh(n,t).catch(()=>{ throw new Err(';; connection timed out; no servers could be reached',9); });
+      return `; <<>> dig ${t} ${n} (via Cloudflare DNS over HTTPS) <<>>\n;; status: ${['NOERROR','FORMERR','SERVFAIL','NXDOMAIN'][j.Status]||j.Status}\n\n;; ANSWER SECTION:\n`+((j.Answer||[]).map(r=>`${r.name}.\t${r.TTL}\tIN\t${DNSR[r.type]||r.type}\t${r.data}`).join('\n')||';; (no records)')+'\n'; };
+    C.nslookup=async a=>{ const n=a[0]; if(!n) throw new Err('usage: nslookup <name>'); const j=await doh(n,'A'); if(!(j.Answer||[]).length) throw new Err(`** server can't find ${n}: NXDOMAIN`); return 'Server:  1.1.1.1 (DoH)\n\nNon-authoritative answer:\n'+j.Answer.filter(r=>r.type===1).map(r=>`Name:    ${n}\nAddress: ${r.data}`).join('\n')+'\n'; };
+    C.host=async a=>{ const n=a[0]; if(!n) throw new Err('usage: host <name>'); const j=await doh(n,'A'); if(!(j.Answer||[]).length) throw new Err(`Host ${n} not found: 3(NXDOMAIN)`); return j.Answer.map(r=>r.type===1?`${n} has address ${r.data}`:`${n} is an alias for ${r.data}`).join('\n')+'\n'; };
+    C.ping=async(a,inp,x)=>{ const h=(a.find(s=>!s.startsWith('-'))||'').replace(/^https?:\/\//,'').split('/')[0]; if(!h) throw new Err('ping: usage error: Destination address required',2);
+      x.live(`PING ${h} — timed over HTTPS (browsers can't send ICMP)`); const ts=[];
+      for(let i=0;i<4;i++) { if(aborted) break; const t0=performance.now(); try { await fetch('https://'+h+'/?'+Math.random(),{mode:'no-cors',cache:'no-store',signal:AbortSignal.timeout(5000)}); const ms=performance.now()-t0; ts.push(ms); x.live(`reply from ${h}: seq=${i} time=${ms.toFixed(1)} ms`); } catch(_) { x.live(`request timeout for seq=${i}`); } await sleep(500); }
+      if(!ts.length) throw new Err(`ping: ${h}: unreachable`,1);
+      return `--- ${h} ping statistics ---\n4 sent, ${ts.length} received, min/avg/max = ${Math.min(...ts).toFixed(1)}/${(ts.reduce((p,c)=>p+c,0)/ts.length).toFixed(1)}/${Math.max(...ts).toFixed(1)} ms\n`; };
+    C.weather=async a=>{ const r=await httpReq({url:`https://wttr.in/${encodeURIComponent(a.join(' '))}?format=3`,method:'GET',headers:{}}).catch(()=>{ throw new Err('weather: could not fetch'); }); return r.body.trim()+'\n'; };
+    C.myip=async()=>{ const r=await httpReq({url:'https://api.ipify.org',method:'GET',headers:{}}).catch(()=>{ throw new Err('myip: could not fetch'); }); return r.body.trim()+'\n'; };
+
+    const cmdHistory=(()=>{ try { return JSON.parse(localStorage.getItem('suka:hist')||'[]'); } catch(_) { return []; } })();
+    let hIdx=cmdHistory.length;
+    function tokenize(line) {
+      const toks=[]; let cur='',has=false,q=null;
+      const push=()=>{ if(has) toks.push({w:cur}); cur=''; has=false; };
+      for(let i=0;i<line.length;i++) { const c=line[i];
+        if(q) { if(c===q) q=null; else if(c==='\\'&&q==='"'&&i+1<line.length) cur+=line[++i]; else if(c==='$'&&q==='"') { const m=line.slice(i+1).match(/^(\w+|\?)/); if(m) { cur+=m[1]==='?'?lastCode:(env[m[1]]||''); i+=m[1].length; } else cur+=c; } else cur+=c; continue; }
+        if(c==="'"||c==='"') { q=c; has=true; continue; }
+        if(c==='\\'&&i+1<line.length) { cur+=line[++i]; has=true; continue; }
+        if(/\s/.test(c)) { push(); continue; }
+        if(c==='#'&&!has) break;
+        if(c==='$') { const m=line.slice(i+1).match(/^(\w+|\?)/); if(m) { cur+=m[1]==='?'?lastCode:(env[m[1]]||''); i+=m[1].length; has=true; continue; } }
+        if(c==='~'&&!has&&(i+1===line.length||/[\s/]/.test(line[i+1]))) { cur+=env.HOME; has=true; continue; }
+        if(c==='|'||c===';'||c==='&'||c==='>') { push(); let op=c; if(c==='|'&&line[i+1]==='|') { op='||'; i++; } else if(c==='&'&&line[i+1]==='&') { op='&&'; i++; } else if(c==='>'&&line[i+1]==='>') { op='>>'; i++; } else if(c==='&') continue; toks.push({op}); continue; }
+        cur+=c; has=true; }
+      push(); return toks;
+    }
+    async function runPipeline(toks) {
+      const cmds=[{argv:[],redir:null}]; 
+      for(let i=0;i<toks.length;i++) { const t=toks[i], c=cmds[cmds.length-1];
+        if(t.op==='|') cmds.push({argv:[],redir:null});
+        else if(t.op==='>'||t.op==='>>') { const f=toks[++i]; if(!f||f.w==null) { println('\x1b[31msuka-sh: syntax error near `>`\x1b[0m'); lastCode=2; return; } c.redir={file:f.w,append:t.op==='>>'}; }
+        else c.argv.push(t.w); }
+      let stdin='';
+      for(let k=0;k<cmds.length;k++) { const c=cmds[k]; let argv=c.argv; if(!argv.length) continue;
+        if(aliases[argv[0]]) argv=[...tokenize(aliases[argv[0]]).filter(t=>t.w!=null).map(t=>t.w),...argv.slice(1)];
+        const last=k===cmds.length-1, direct=last&&!c.redir, buf=[]; let text='';
+        const fn=Object.prototype.hasOwnProperty.call(C,argv[0])?C[argv[0]]:null;
+        if(!fn) { println(`\x1b[31m${argv[0]}: command not found\x1b[0m`); lastCode=127; stdin=''; continue; }
+        lastCode=0;
+        try { const ret=await fn(argv.slice(1),stripAnsi(stdin),{live:t=>direct?println(t):buf.push(t)}); text=(buf.length?buf.join('\n')+'\n':'')+(ret||''); }
+        catch(e) { if(e.message||!(e instanceof Err)) println(`\x1b[31m${e instanceof Err?e.message:argv[0]+': '+e.message}\x1b[0m`); lastCode=e.code||1; text=''; }
+        if(c.redir) { try { writeFile(c.redir.file,stripAnsi(text),c.redir.append); } catch(e) { println(`\x1b[31msuka-sh: ${e.message}\x1b[0m`); lastCode=1; } stdin=''; }
+        else if(last) { if(text) println(text.replace(/\n$/,'')); } else stdin=text;
+      }
+    }
+    async function execLine(line) {
+      const toks=tokenize(line), stmts=[]; let cur=[];
+      for(const t of toks) { if(t.op===';'||t.op==='&&'||t.op==='||') { stmts.push({toks:cur,next:t.op}); cur=[]; } else cur.push(t); }
+      stmts.push({toks:cur,next:null}); let prev=';';
+      for(const s of stmts) { if(prev===';'||(prev==='&&'&&lastCode===0)||(prev==='||'&&lastCode!==0)) { if(s.toks.length) await runPipeline(s.toks); } prev=s.next; if(aborted) break; }
+    }
+    async function runLine(raw) {
+      println(`\x1b[90m${promptText()}\x1b[0m ${raw}`.replace(/\n/g,' '));
+      if(!raw.trim()) return;
+      cmdHistory.push(raw); if(cmdHistory.length>200) cmdHistory.shift(); hIdx=cmdHistory.length;
+      try { localStorage.setItem('suka:hist',JSON.stringify(cmdHistory)); } catch(_) {}
+      busy=true; aborted=false; try { await execLine(raw); } finally { busy=false; promptRow.hidden=false; toBottom(); input.focus({preventScroll:true}); }
+    }
+
     const log=document.createElement('div');
     const promptRow=document.createElement('label'); promptRow.className='prompt-row';
-    promptRow.innerHTML=`<span class="faint">${PROMPT}&nbsp;</span>`;
+    const promptEl=document.createElement('span'); promptEl.className='a-f';
     const input=document.createElement('input');
     input.type='text'; input.id='termInput'; input.autocomplete='off'; input.spellcheck=false;
     input.setAttribute('autocapitalize','off'); input.setAttribute('autocorrect','off'); input.setAttribute('aria-label','Terminal input');
-    promptRow.append(input); terminal.append(log,promptRow);
-
+    promptRow.append(promptEl,document.createTextNode('\u00a0'),input); terminal.append(log,promptRow);
+    const promptText=()=>`${env.USER}@${env.HOSTNAME}:${cwd===env.HOME?'~':cwd.startsWith(env.HOME+'/')?'~'+cwd.slice(env.HOME.length):cwd}$`;
+    const updatePrompt=()=>{ promptEl.textContent=promptText(); };
     const toBottom=()=>{ box.scrollTop=box.scrollHeight; };
-    const print=(html,cls='')=>{ const p=document.createElement('p'); if(cls)p.className=cls; p.innerHTML=html===''?'&nbsp;':html; log.append(p); toBottom(); };
-    const wait=ms=>new Promise(r=>setTimeout(r,ms));
-    async function reveal(lines,delay=70){ busy=true; for(const [h,c] of lines){ print(h,c); await wait(delay); } busy=false; input.focus({preventScroll:true}); }
+    const println=t=>{ const p=document.createElement('p'); p.innerHTML=t===''?'&nbsp;':ansi(t); log.append(p); toBottom(); };
+    updatePrompt();
 
-    const NMAP=[
-      ['Under my control','red'],
-      ["suka.rest's Nmap 7.95",'bright'],
-      ['Starting Nmap 7.95 ( https://nmap.org )'],
-      ['Nmap scan report for suka.rest'],
-      ['Host is up (0.045s latency).'],
-      ['PORT     STATE  SERVICE   VERSION'],
-      ['22/tcp   open   ssh       OpenSSH'],
-      ['80/tcp   open   http      nginx'],
-      ['443/tcp  open   https     nginx'],
-      ['3306/tcp open   mysql     MySQL'],
-      ['6379/tcp open   redis     Redis'],
-      ['Nmap done: 1 IP address (1 host up) scanned','faint']
-    ];
-    const FILES={
-      'about.txt':['suka world — a little corner of the internet.'],
-      'friends.txt':()=>friendLines(),
-      'secret.txt':['nice try. 🖤']
-    };
-    const friendLines=()=>{
-      const list=Array.isArray(window.SUKA_FRIENDS)?window.SUKA_FRIENDS:[];
-      return list.length?list.map(f=>`${esc(f.name||'friend')}  <span class="faint">${esc(f.id||'')}${f.note?' — '+esc(f.note):''}</span>`):['no friends yet :('];
-    };
-    const COMMANDS=['help','nmap','whoami','ls','cat','friends','date','echo','clear','music','mood','neofetch','uname','ping','history','sudo','exit'];
-
-    function run(raw) {
-      print(`<span class="faint">${PROMPT}</span> ${esc(raw)}`);
-      raw=raw.trim(); if(!raw) return;
-      cmdHistory.push(raw); hIdx=cmdHistory.length;
-      const [cmd,...rest]=raw.split(/\s+/); const arg=rest.join(' ');
-      const say=(lines,cls)=>lines.forEach(l=>print(l,cls));
-      switch(cmd.toLowerCase()) {
-        case 'help': say(['commands:','  help       this list','  nmap       scan suka.rest','  whoami     who you are','  ls / cat   look around','  friends    the people I like','  music      play | pause | next | prev | list | status','  mood       change the mood','  neofetch   system info','  date       current time','  echo       repeat after me','  clear      wipe the screen'],'bright'); break;
-        case 'nmap': reveal(NMAP); break;
-        case 'whoami': say(['guest']); break;
-        case 'ls': say(['about.txt  friends.txt  secret.txt']); break;
-        case 'cat': {
-          const f=FILES[arg];
-          if(!arg) say(['cat: missing file name']);
-          else if(!f) say([`cat: ${esc(arg)}: No such file or directory`]);
-          else say(typeof f==='function'?f():f);
-          break; }
-        case 'friends': say(friendLines()); break;
-        case 'date': say([new Date().toString()]); break;
-        case 'echo': say([esc(arg)||'&nbsp;']); break;
-        case 'clear': log.replaceChildren(); break;
-        case 'uname': say(['SukaOS 7.95 suka.rest x86_64']); break;
-        case 'ping': reveal([['PING suka.rest: 56 data bytes'],['64 bytes: icmp_seq=0 time=0.045 ms'],['64 bytes: icmp_seq=1 time=0.044 ms'],['64 bytes: icmp_seq=2 time=0.046 ms'],['--- 3 packets transmitted, 3 received, 0% loss','faint']],220); break;
-        case 'mood': document.body.classList.toggle('soft'); say(['mood changed.']); break;
-        case 'history': say(cmdHistory.map((c,i)=>`${String(i+1).padStart(3,' ')}  ${esc(c)}`)); break;
-        case 'sudo': say(['guest is not in the sudoers file. This incident will be reported.'],'red'); break;
-        case 'exit': say(['there is no escape. 🖤']); break;
-        case 'neofetch': say(['<span class="red">guest</span>@<span class="red">suka.rest</span>','-----------------','OS:      SukaOS 7.95','Shell:   suka-sh','Uptime:  forever','Theme:   '+(document.body.classList.contains('soft')?'soft':'dark'),'Friends: '+((window.SUKA_FRIENDS||[]).length)],'bright'); break;
-        case 'music': {
-          const a=document.getElementById('audio'); const sub=arg.toLowerCase();
-          if(sub==='play') { a.play().catch(()=>{}); say(['playing.']); }
-          else if(sub==='pause') { a.pause(); say(['paused.']); }
-          else if(sub==='restart') { a.currentTime=0; a.play().catch(()=>{}); say(['restarted.']); }
-          else if(sub==='next') { next(); say(['next track.']); }
-          else if(sub==='prev') { prev(); say(['previous track.']); }
-          else if(sub==='list') say(playlist.map((t,i)=>`${i===cur?'▸':' '} ${i+1}. ${esc(t.title)}`));
-          else if(sub==='status'||!sub) say([`now: ${esc(document.getElementById('track').textContent)} (${a.paused?'paused':'playing'})`]);
-          else say(['usage: music play | pause | next | prev | list | restart | status']);
-          break; }
-        default: say([`${esc(cmd)}: command not found. try <span class="bright">help</span>`]);
-      }
-    }
     input.addEventListener('keydown',e=>{
-      if(busy&&e.key!=='Tab') { if(e.key==='Enter') e.preventDefault(); }
-      if(e.key==='Enter') { if(busy) return; const v=input.value; input.value=''; run(v); }
-      else if(e.key==='ArrowUp') { e.preventDefault(); if(hIdx>0){ hIdx--; input.value=cmdHistory[hIdx]; } }
-      else if(e.key==='ArrowDown') { e.preventDefault(); if(hIdx<cmdHistory.length-1){ hIdx++; input.value=cmdHistory[hIdx]; } else { hIdx=cmdHistory.length; input.value=''; } }
-      else if(e.key==='Tab') { e.preventDefault(); const m=COMMANDS.filter(c=>c.startsWith(input.value.toLowerCase())); if(input.value&&m.length===1) input.value=m[0]+' '; }
+      if(e.key==='Enter') { e.preventDefault(); if(busy) return; const v=input.value; input.value=''; runLine(v); }
+      else if(e.key==='c'&&e.ctrlKey) { e.preventDefault(); if(busy) { aborted=true; println('^C'); } else { println(`\x1b[90m${promptText()}\x1b[0m ${input.value}^C`); input.value=''; } }
       else if(e.key==='l'&&e.ctrlKey) { e.preventDefault(); log.replaceChildren(); }
+      else if(e.key==='ArrowUp') { e.preventDefault(); if(hIdx>0) { hIdx--; input.value=cmdHistory[hIdx]; } }
+      else if(e.key==='ArrowDown') { e.preventDefault(); if(hIdx<cmdHistory.length-1) { hIdx++; input.value=cmdHistory[hIdx]; } else { hIdx=cmdHistory.length; input.value=''; } }
+      else if(e.key==='Tab') {
+        e.preventDefault(); const v=input.value, sp=v.lastIndexOf(' '), word=v.slice(sp+1), head=v.slice(0,sp+1);
+        let opts,pre=word;
+        if(sp<0) opts=[...Object.keys(C),...Object.keys(aliases)].filter(c=>c.startsWith(word));
+        else { const i=word.lastIndexOf('/'), dp=word.slice(0,i+1); pre=word.slice(i+1); const d=node(dp||'.'); opts=d&&d.t==='d'?Object.keys(d.ch).filter(k=>k.startsWith(pre)).map(k=>dp+k+(d.ch[k].t==='d'?'/':'')):[]; }
+        if(opts.length===1) input.value=head+opts[0]+(sp<0?' ':'');
+        else if(opts.length>1) println(opts.map(o=>o.split('/').filter(Boolean).pop()+(o.endsWith('/')?'/':'')).join('  '));
+      }
     });
-    box.addEventListener('click',()=>{ if(!getSelection().toString()) input.focus({preventScroll:true}); });
-    print(`<span class="faint">${PROMPT}</span> nmap`);
-    NMAP.forEach(([h,c])=>print(h,c));
-    print('type <span class="bright">help</span> to see what I can do.','faint');
+    box.addEventListener('click',e=>{ if(!getSelection().toString()&&!e.target.closest('.terminal-bar')) input.focus({preventScroll:true}); });
+    println('\x1b[1mSukaOS 7.95\x1b[0m — type \x1b[1mhelp\x1b[0m. curl, dig, ping, weather and browse are real.');
+    runLine('nmap');
 
     const validId=id=>/^\d{17,22}$/.test(String(id||''));
     const friendNav=document.getElementById('friends');
@@ -389,7 +602,7 @@
         const show=img=>circle.replaceChildren(img);
         let fetched=null, overrideOk=false;
         if(person.avatar) loadImage(String(person.avatar),img=>{ overrideOk=true; show(img); },()=>{ if(fetched?.avatar) loadImage(fetched.avatar,show); });
-        else if(hasId) loadImage(defaultAvatar(id),show);
+        else if(hasId) loadImage(defaultAvatar(id),show);   // instant placeholder pfp, replaced below
         if(!hasId) return;
 
         getDiscordUser(id).then(user=>{
@@ -405,6 +618,52 @@
     }
     renderFriends();
     document.getElementById('theme').addEventListener('click',()=>document.body.classList.toggle('soft'));
+
+    let zTop=20;
+    const front=w=>{ w.style.zIndex=++zTop; };
+    function makeDraggable(win,handle) {
+      handle.style.touchAction='none';
+      win.addEventListener('pointerdown',()=>front(win),true);
+      handle.addEventListener('pointerdown',e=>{
+        if(e.target.closest('button')||e.button>0) return;
+        const sr=(win.offsetParent||document.body).getBoundingClientRect(), r=win.getBoundingClientRect(), ox=e.clientX-r.left, oy=e.clientY-r.top;
+        win.style.left=(r.left-sr.left)+'px'; win.style.top=(r.top-sr.top)+'px'; win.style.right='auto'; win.style.bottom='auto';
+        handle.setPointerCapture(e.pointerId);
+        const move=ev=>{ win.style.left=Math.min(Math.max(ev.clientX-ox-sr.left,-r.width+90),sr.width-90)+'px'; win.style.top=Math.min(Math.max(ev.clientY-oy-sr.top,0),sr.height-30)+'px'; };
+        const up=()=>{ handle.removeEventListener('pointermove',move); handle.removeEventListener('pointerup',up); handle.removeEventListener('pointercancel',up); };
+        handle.addEventListener('pointermove',move); handle.addEventListener('pointerup',up); handle.addEventListener('pointercancel',up);
+        e.preventDefault();
+      });
+    }
+    const browserWin=document.getElementById('browserWin');
+    makeDraggable(box,box.querySelector('.terminal-bar')); makeDraggable(browserWin,document.getElementById('browserBar'));
+    document.getElementById('termClose').addEventListener('click',()=>{ box.hidden=true; });
+    document.getElementById('openTerm').addEventListener('click',()=>{ box.hidden=false; front(box); input.focus({preventScroll:true}); });
+    document.getElementById('openBrowser').addEventListener('click',()=>{ browserWin.hidden=false; front(browserWin); document.getElementById('bUrl').focus(); });
+    document.getElementById('browserClose').addEventListener('click',()=>{ browserWin.hidden=true; });
+
+    const bFrame=document.getElementById('bFrame'), bUrl=document.getElementById('bUrl'), bStat=document.getElementById('bStat');
+    let bHist=[], bIdx=-1;
+    function bNormalize(v) {
+      v=String(v||'').trim(); if(!v) return null;
+      if(/^https?:\/\//i.test(v)) return v;
+      if(/^[\w-]+(\.[\w-]+)+(:\d+)?([/?#].*)?$/.test(v)) return 'https://'+v;
+      return 'https://html.duckduckgo.com/html/?q='+encodeURIComponent(v);
+    }
+    function browse(v,push=true) {
+      const url=bNormalize(v); if(!url) return;
+      browserWin.hidden=false; front(browserWin);
+      if(push) { bHist=bHist.slice(0,bIdx+1); bHist.push(url); bIdx=bHist.length-1; }
+      bUrl.value=url; bStat.textContent='loading…';
+      bFrame.src='/api/browse?url='+encodeURIComponent(url);
+    }
+    bFrame.addEventListener('load',()=>{ bStat.textContent=bHist[bIdx]||''; });
+    window.addEventListener('message',e=>{ if(e.source===bFrame.contentWindow&&e.data&&e.data.suka==='nav'&&typeof e.data.url==='string') browse(e.data.url); });
+    bUrl.addEventListener('keydown',e=>{ if(e.key==='Enter') browse(bUrl.value); });
+    document.getElementById('bBack').addEventListener('click',()=>{ if(bIdx>0) { bIdx--; browse(bHist[bIdx],false); } });
+    document.getElementById('bFwd').addEventListener('click',()=>{ if(bIdx<bHist.length-1) { bIdx++; browse(bHist[bIdx],false); } });
+    document.getElementById('bReload').addEventListener('click',()=>{ if(bHist[bIdx]) browse(bHist[bIdx],false); });
+    document.getElementById('bOut').addEventListener('click',()=>{ if(bHist[bIdx]) window.open(bHist[bIdx],'_blank','noopener'); });
 
     const audio=document.getElementById('audio'),file=document.getElementById('file'),play=document.getElementById('play'),seek=document.getElementById('seek');
     const trackName=document.getElementById('track'),trackStatus=document.getElementById('trackStatus'),listEl=document.getElementById('playlist');
