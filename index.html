@@ -1,1784 +1,330 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>suka.rest - About me</title>
-
-  <meta property="og:type" content="profile">
-  <meta property="og:title" content="@paygates">
-  <meta property="og:description" content="I'm just someone who bypassed stripe payment_intent.">
-  <meta property="og:url" content="https://suka.rest/">
-  <meta property="og:image" content="https://i.pinimg.com/736x/c7/bb/4e/c7bb4ef758b0c1b1a378a68083c2daeb.jpg">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020202">
+  <meta name="description" content="Suka World — a little corner of the internet.">
+  <title>SUKA WORLD</title>
   <style>
-    :root {
-      --accent: 255,255,255;
-      --accent-soft: rgba(255,255,255,.18);
-      --accent-glow: rgba(255,255,255,.45);
-      --card: #2b2d31;
-      --dark: #1e1f22;
-      --bg: #080808;
-      --rotate-x: 0deg;
-      --rotate-y: 0deg;
-      --card-scale: 1;
-      --translate-x: 0px;
-      --translate-y: 0px;
+    :root { color-scheme: dark; --base:#020202; --text:#b8b8b8; --line:#242424; --accent:#96333e; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { min-height:100%; background:var(--base); }
+    body { margin:0; min-height:100%; background:var(--base); color:var(--text); font-family:Georgia,"Times New Roman",serif; overflow-x:hidden; }
+    button,input { font:inherit; }
+    a { -webkit-tap-highlight-color:transparent; }
+    .stars { position:fixed; inset:0; z-index:0; pointer-events:none; background-image:radial-gradient(1px 1px at 17% 13%,#999 99%,transparent),radial-gradient(1px 1px at 48% 7%,#aaa 99%,transparent),radial-gradient(1px 1px at 69% 37%,#777 99%,transparent),radial-gradient(1px 1px at 92% 66%,#777 99%,transparent),radial-gradient(1px 1px at 33% 75%,#777 99%,transparent);background-size:280px 210px;opacity:.38;animation:drift 35s linear infinite; }
+    @keyframes drift { to { transform:translateY(-210px); } }
+
+    .boot-screen { position:fixed; inset:0; z-index:1000; background:#000; display:grid; place-items:center; opacity:1; visibility:visible; transition:opacity .65s ease,visibility .65s ease; }
+    .boot-screen.finished { opacity:0; visibility:hidden; pointer-events:none; }
+    .boot-inner { width:min(230px,75vw); margin-top:-2vh; font-family:"Courier New",monospace; }
+    .boot-title { text-align:center; color:#a6a6a6; font-family:Georgia,"Times New Roman",serif; font-size:clamp(11px,1vw,15px); letter-spacing:.36em; font-weight:700; white-space:nowrap; margin:0 0 17px; }
+    .boot-output { color:#777; font-size:clamp(7px,.7vw,10px); line-height:1.8; min-height:100px; white-space:pre-wrap; }
+    .boot-line { opacity:0; animation:boot-reveal .12s ease forwards; }
+    @keyframes boot-reveal { to { opacity:1; } }
+    .boot-skip { display:block; margin:17px auto 0; padding:5px 10px; color:#555; background:transparent; border:1px solid #191919; font:9px monospace; letter-spacing:.08em; cursor:pointer; }
+    .boot-skip:hover,.boot-skip:focus-visible { color:#bbb; border-color:#555; }
+    body.booting .stage, body.booting .stars, body.booting .music { visibility:hidden; }
+
+    .stage { width:100%; height:100vh; height:100dvh; min-height:0; position:relative; isolation:isolate; overflow:hidden; }
+    .site-header { position:absolute; top:clamp(18px,3.3vh,35px); left:0; width:100%; text-align:center; z-index:5; pointer-events:none; }
+    .brand { color:#c5c5c5; font-size:clamp(9px,.77vw,13px); font-weight:700; letter-spacing:clamp(3px,.4vw,7px); text-transform:uppercase; text-decoration:none; pointer-events:auto; white-space:nowrap; }
+    .theme { position:absolute; right:clamp(12px,2vw,34px); top:0; padding:6px 11px; background:transparent; border:1px solid #292929; color:#7f7f7f; font:clamp(8px,.65vw,11px) monospace; letter-spacing:.08em; cursor:pointer; pointer-events:auto; }
+    .theme:hover { border-color:#777; color:#ddd; }
+
+    .friends { position:absolute; z-index:6; left:clamp(12px,2vw,40px); top:clamp(65px,10vh,120px); display:flex; flex-direction:column; align-items:center; gap:clamp(14px,2.6vh,26px); max-height:80vh; overflow:auto; scrollbar-width:thin; scrollbar-color:#333 transparent; padding:8px 12px 8px 8px; }
+    .friend { display:flex; align-items:center; flex-direction:column; gap:5px; text-decoration:none; color:#acacac; font-size:clamp(9px,.75vw,12px); letter-spacing:.04em; width:clamp(118px,10.5vw,150px); text-align:center; transition:color .2s; }
+    .friend[aria-disabled="true"] { cursor:default; }
+    .friend:hover { color:#f5f5f5; }
+    .friend:hover .friend-avatar { filter:grayscale(0); transform:translateY(-2px); border-color:#757575; }
+    .avatar-wrap { position:relative; flex:none; width:clamp(53px,4.7vw,74px); height:clamp(53px,4.7vw,74px); margin-bottom:4px; }
+    .friend-avatar { display:grid; place-items:center; width:100%; height:100%; border:1px solid #343434; border-radius:50%; overflow:hidden; background:radial-gradient(circle at 35% 25%,#595959,#191919 52%,#080808); box-shadow:0 0 14px #ffffff0a; filter:grayscale(.40); transition:filter .2s,transform .2s,border-color .2s; }
+    .friend-avatar img { display:block; width:100%; height:100%; object-fit:cover; }
+    .friend-avatar .placeholder { color:#d2d2d2; font:700 clamp(17px,2vw,29px) Georgia,serif; text-transform:uppercase; }
+    .avatar-deco { position:absolute; inset:-10%; width:120%; height:120%; max-width:none; pointer-events:none; }
+    .friend-name { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d0d0d0; font-weight:700; }
+    .friend-user { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#8a8a8a; font-size:.9em; }
+    .friend-id { display:block; max-width:100%; font:clamp(7px,.58vw,9px) "Courier New",monospace; color:#6c6c6c; letter-spacing:.02em; white-space:nowrap; }
+    .friend-id::before { content:"✦ "; color:var(--accent); }
+    .friend-id::after { content:" ✦"; color:var(--accent); }
+    .friend:hover .friend-id { color:#a8a8a8; }
+    .friend:focus-visible, .theme:focus-visible, .music button:focus-visible, .music label:focus-visible { outline:1px solid #ddd; outline-offset:3px; }
+
+    .terminal { position:absolute; z-index:3; top:clamp(125px,29vh,440px); left:30.5%; width:clamp(310px,32vw,610px); max-height:61vh; overflow:auto; background:#050505ef; border:1px solid #242424; box-shadow:0 0 0 1px #0b0b0b,0 12px 60px #0008; color:#919191; font:clamp(9px,.72vw,12px)/1.46 "Courier New",monospace; }
+    .terminal-bar { min-height:clamp(21px,2.3vh,30px); background:#151515; border-bottom:1px solid #242424; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 9px; font-size:clamp(8px,.65vw,11px); color:#606060; }
+    .dots { display:flex; gap:4px; }
+    .dots i { display:block; width:5px; height:5px; border-radius:50%; background:#555; }
+    .terminal-content { padding:clamp(8px,1vw,16px); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .terminal-content p { margin:0; }
+    .terminal-content .red { color:var(--accent); }
+    .terminal-content .bright { color:#bbb; }
+    .terminal-content .faint { color:#666; }
+    .cursor { animation:blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity:0; } }
+
+    .character { position:absolute; right:clamp(-22px,1.2vw,35px); bottom:0; z-index:2; width:clamp(310px,41vw,800px); height:auto; max-height:80dvh; object-fit:contain; object-position:right bottom; pointer-events:none; user-select:none; filter:brightness(.96); }
+    .status { position:absolute; bottom:clamp(18px,4vh,40px); left:clamp(20px,4.3vw,90px); z-index:3; font:clamp(7px,.55vw,11px) "Courier New",monospace; color:#3c3c3c; letter-spacing:.14em; }
+
+    .music { position:fixed; right:clamp(10px,1.7vw,30px); bottom:clamp(10px,2.5vh,32px); z-index:10; width:clamp(155px,16vw,250px); padding:10px; background:#080808ed; border:1px solid #292929; backdrop-filter:blur(8px); font:clamp(9px,.7vw,12px) "Courier New",monospace; box-shadow:0 8px 32px #000a; }
+    .track { display:flex; gap:8px; align-items:center; border-bottom:1px solid #292929; padding-bottom:7px; }
+    .cover { width:28px; height:28px; background:linear-gradient(135deg,#777,#313131 45%,#000); flex:none; }
+    .track-meta { min-width:0; flex:1; }
+    .track-name { color:#c9c9c9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sub { color:#777; font-size:.8em; margin-top:3px; }
+    .controls { display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:5px; }
+    .controls button,.controls label { background:transparent; border:0; padding:3px; color:#b9b9b9; cursor:pointer; font:14px monospace; }
+    .controls button:hover,.controls label:hover { color:white; }
+    .clock { font:10px monospace; color:#929292; }
+    .seek { display:block; width:100%; height:3px; accent-color:#a5a5a5; margin:7px 0 0; cursor:pointer; }
+    .soft { --base:#0a0810; --accent:#b77898; }
+    .soft .terminal { border-color:#523647; }
+    .soft .brand { color:#e0bccc; }
+
+    @media (max-width:1000px) and (min-width:681px) {
+      .terminal { left:27%; width:40%; }
+      .character { right:-3%; width:45vw; height:auto; max-height:72vh; }
+      .friends { left:10px; }
+    }
+    @media (max-width:680px) {
+      .stage { height:auto; min-height:max(800px,100dvh); overflow:hidden; padding-bottom:400px; }
+      .site-header { top:20px; }
+      .brand { font-size:10px; letter-spacing:2px; }
+      .theme { top:44px; right:12px; font-size:8px; }
+      .friends { top:83px; left:7px; right:7px; display:flex; flex-direction:row; align-items:flex-start; justify-content:flex-start; gap:12px; max-height:none; overflow-x:auto; padding:8px 8px 9px; }
+      .friend { width:112px; min-width:112px; font-size:9px; }
+      .avatar-wrap { width:46px; height:46px; }
+      .friend-id { font-size:7px; }
+      .terminal { left:5%; top:250px; width:90%; min-width:0; max-height:320px; font-size:10px; }
+      .character { bottom:85px; right:-25px; width:min(90vw,490px); height:auto; max-height:48vh; }
+      .status { left:14px; bottom:18px; font-size:7px; }
+      .music { right:10px; bottom:10px; width:180px; }
+    }
+    @media (max-width:380px) {
+      .terminal { top:240px; font-size:9px; }
+    }
+    @media (max-height:560px) and (min-width:681px) {
+      .terminal { top:27%; max-height:62%; }
+      .friends { top:16%; gap:9px; }
+      .avatar-wrap { width:42px; height:42px; }
+      .character { width:min(42vw,590px); height:auto; max-height:75%; }
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      min-height: 100%;
-      background: #000;
-    }
-
-    body {
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(var(--accent),.07), transparent 35%),
-        radial-gradient(circle at 10% 20%, rgba(var(--accent),.04), transparent 30%),
-        var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: "Inter",system-ui,-apple-system,sans-serif;
-      color: #fff;
-      padding: 24px;
-      overflow: hidden;
-      transition: background 1s ease;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        linear-gradient(
-          115deg,
-          transparent 0%,
-          rgba(255,255,255,.025) 45%,
-          transparent 50%
-        );
-      background-size: 300% 300%;
-      pointer-events: none;
-      animation: backgroundSweep 12s linear infinite;
-      z-index: 0;
-    }
-
-    @keyframes backgroundSweep {
-      0% {
-        background-position: 200% 0;
-      }
-      100% {
-        background-position: -200% 100%;
-      }
-    }
-
-    #snow {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .b {
-      position: absolute;
-      top: -50px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.75);
-      box-shadow:
-        0 0 8px rgba(255,255,255,.5),
-        0 0 18px rgba(var(--accent),.3);
-      animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-      0% {
-        transform: translate3d(0,-50px,0) scale(0);
-        opacity: 0;
-      }
-      5% {
-        opacity: .8;
-        transform: translate3d(0,-30px,0) scale(1);
-      }
-      50% {
-        transform: translate3d(30px,50vh,0) scale(1);
-      }
-      100% {
-        transform: translate3d(-30px,110vh,0) scale(.2);
-        opacity: 0;
-      }
-    }
-
-    .card {
-      width: 100%;
-      max-width: 380px;
-      padding: 28px 24px 32px;
-      position: relative;
-      z-index: 1;
-      background:
-        linear-gradient(
-          145deg,
-          rgba(255,255,255,.045),
-          rgba(255,255,255,.015)
-        ),
-        var(--card);
-      border: 1px solid rgba(255,255,255,.09);
-      border-radius: 22px;
-      box-shadow:
-        0 30px 80px rgba(0,0,0,.65),
-        0 0 0 1px rgba(255,255,255,.025),
-        0 0 45px rgba(var(--accent),.08),
-        0 0 70px 6px rgba(255,255,255,.14);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      transform-style: preserve-3d;
-      transform:
-        perspective(1000px)
-        rotateX(var(--rotate-x))
-        rotateY(var(--rotate-y))
-        translate3d(var(--translate-x),var(--translate-y),0)
-        scale(var(--card-scale));
-      will-change: transform;
-      animation: cardEnter .9s cubic-bezier(.16,1,.3,1) backwards;
-      transition:
-        background .8s ease,
-        box-shadow .5s ease,
-        border-color .5s ease;
-    }
-
-    .card:hover {
-      box-shadow:
-        0 35px 95px rgba(0,0,0,.72),
-        0 0 0 1px rgba(255,255,255,.035),
-        0 0 60px rgba(var(--accent),.14),
-        0 0 100px 14px rgba(255,255,255,.32);
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: 23px;
-      padding: 1px;
-      background:
-        linear-gradient(
-          120deg,
-          transparent 15%,
-          rgba(var(--accent),.5),
-          transparent 45%,
-          transparent 70%,
-          rgba(255,255,255,.15)
-        );
-      background-size: 250% 250%;
-      animation: borderFlow 7s linear infinite;
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-
-    .card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background:
-        radial-gradient(
-          circle at 50% 0%,
-          rgba(var(--accent),.12),
-          transparent 38%
-        );
-      pointer-events: none;
-    }
-
-    .card > * {
-      position: relative;
-      z-index: 2;
-    }
-
-    @keyframes cardEnter {
-      from {
-        opacity: 0;
-        filter: blur(10px);
-        transform:
-          perspective(900px)
-          rotateX(5deg)
-          rotateY(0deg)
-          translateY(35px)
-          scale(.94);
-      }
-      to {
-        opacity: 1;
-        filter: blur(0);
-        transform:
-          perspective(900px)
-          rotateX(0deg)
-          rotateY(0deg)
-          translateY(0)
-          scale(1);
-      }
-    }
-
-    @keyframes borderFlow {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    .enter-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    .enter-overlay.hidden {
-      display: none;
-    }
-
-    .views {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .02em;
-      color: rgba(255,255,255,.65);
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.06);
-      padding: 5px 10px;
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 0 15px rgba(var(--accent),.05);
-      transition: .3s ease;
-    }
-
-    .views:hover {
-      color: #fff;
-      transform: translateY(-2px);
-      box-shadow: 0 0 20px rgba(var(--accent),.2);
-    }
-
-    .views svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
-      filter: drop-shadow(0 0 5px currentColor);
-    }
-
-    #view-count {
-      animation: countPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes countPulse {
-      50% {
-        text-shadow: 0 0 12px rgba(var(--accent),.7);
-      }
-    }
-
-    .audio-toggle {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 32px;
-      height: 32px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 50%;
-      background: rgba(0,0,0,.25);
-      color: rgba(255,255,255,.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: .3s ease;
-    }
-
-    .audio-toggle:hover {
-      color: #fff;
-      transform: rotate(12deg) scale(1.12);
-      box-shadow: 0 0 20px rgba(var(--accent),.35);
-    }
-
-    .audio-toggle:not(.muted) {
-      animation: audioPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes audioPulse {
-      50% {
-        box-shadow:
-          0 0 0 5px rgba(var(--accent),.04),
-          0 0 22px rgba(var(--accent),.25);
-      }
-    }
-
-    .audio-toggle svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
-    }
-
-    .audio-toggle.muted svg {
-      opacity: .4;
-    }
-
-    .avatar-wrap {
-      position: relative;
-      width: 104px;
-      height: 104px;
-      margin: 0 auto 18px;
-      cursor: pointer;
-    }
-
-    .avatar-wrap::before {
-      content: "";
-      position: absolute;
-      inset: -7px;
-      border-radius: 50%;
-      background:
-        conic-gradient(
-          from 0deg,
-          transparent,
-          rgba(var(--accent),.9),
-          transparent 30%,
-          rgba(255,255,255,.4),
-          transparent 70%
-        );
-      animation: avatarRing 4s linear infinite;
-      filter:
-        blur(1px)
-        drop-shadow(0 0 8px rgba(var(--accent),.45));
-    }
-
-    .avatar-wrap::after {
-      content: "";
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      background: var(--card);
-      z-index: 0;
-    }
-
-    @keyframes avatarRing {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .avatar {
-      position: relative;
-      z-index: 1;
-      width: 104px;
-      height: 104px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid var(--card);
-      background: #1e1f22;
-      display: block;
-      transition:
-        transform .4s cubic-bezier(.16,1,.3,1),
-        filter .4s ease,
-        box-shadow .4s ease;
-    }
-
-    .avatar-wrap:hover .avatar {
-      transform: scale(1.06);
-      filter: brightness(1.08) saturate(1.15);
-      box-shadow: 0 0 25px rgba(var(--accent),.35);
-    }
-
-    .status-dot {
-      position: absolute;
-      z-index: 3;
-      bottom: 3px;
-      right: 3px;
-      width: 23px;
-      height: 23px;
-      border-radius: 50%;
-      border: 4px solid var(--card);
-      transition: .5s ease;
-    }
-
-    .status-dot.online {
-      background: #23a559;
-      box-shadow: 0 0 0 0 rgba(35,165,89,.6);
-      animation: onlinePulse 2s infinite;
-    }
-
-    .status-dot.idle {
-      background: #f0b232;
-      box-shadow: 0 0 12px rgba(240,178,50,.5);
-    }
-
-    .status-dot.dnd {
-      background: #f23f43;
-      box-shadow: 0 0 12px rgba(242,63,67,.5);
-    }
-
-    .status-dot.offline {
-      background: #747f8d;
-    }
-
-    @keyframes onlinePulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(35,165,89,.55);
-      }
-      70% {
-        box-shadow: 0 0 0 9px rgba(35,165,89,0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(35,165,89,0);
-      }
-    }
-
-    .username {
-      text-align: center;
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -.035em;
-      margin-bottom: 4px;
-      background:
-        linear-gradient(
-          90deg,
-          #fff,
-          rgba(var(--accent),.65),
-          #fff,
-          rgba(var(--accent),.65),
-          #fff
-        );
-      background-size: 250% auto;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation:
-        usernameShine 5s linear infinite,
-        usernameGlow 2.8s ease-in-out infinite;
-    }
-
-    @keyframes usernameShine {
-      to {
-        background-position: 250% center;
-      }
-    }
-
-    @keyframes usernameGlow {
-      0%,100% {
-        filter: drop-shadow(0 0 3px rgba(var(--accent),.25));
-      }
-      50% {
-        filter:
-          drop-shadow(0 0 10px rgba(var(--accent),.65))
-          drop-shadow(0 0 25px rgba(var(--accent),.18));
-      }
-    }
-
-    .handle {
-      text-align: center;
-      font-size: .88rem;
-      color: #b5bac1;
-      margin-bottom: 15px;
-      text-shadow: 0 0 8px rgba(var(--accent),.12);
-      transition: .3s ease;
-    }
-
-    .handle:hover {
-      color: #fff;
-      text-shadow: 0 0 12px rgba(var(--accent),.5);
-    }
-
-    .badges {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 7px;
-      min-height: 28px;
-      margin-bottom: 19px;
-    }
-
-    .badge {
-      width: 24px;
-      height: 24px;
-      border-radius: 5px;
-      filter: drop-shadow(0 0 3px rgba(var(--accent),.15));
-      transition:
-        transform .3s cubic-bezier(.16,1,.3,1),
-        filter .3s ease;
-      animation: badgeAppear .5s cubic-bezier(.16,1,.3,1) both;
-    }
-
-    .badge:hover {
-      transform:
-        translateY(-5px)
-        scale(1.25)
-        rotate(5deg);
-      filter:
-        drop-shadow(0 0 5px rgba(var(--accent),.8))
-        drop-shadow(0 0 12px rgba(var(--accent),.35));
-    }
-
-    @keyframes badgeAppear {
-      from {
-        opacity: 0;
-        transform: translateY(10px) scale(.5);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .bio-label {
-      font-size: .68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .11em;
-      color: #949ba4;
-      margin-bottom: 7px;
-      padding-left: 2px;
-      text-shadow: 0 0 8px rgba(var(--accent),.15);
-    }
-
-    .bio-box {
-      position: relative;
-      background: var(--dark);
-      border: 1px solid rgba(255,255,255,.05);
-      border-radius: 13px;
-      padding: 15px 16px;
-      font-size: .94rem;
-      line-height: 1.55;
-      color: #dbdee1;
-      text-align: center;
-      word-break: break-word;
-      min-height: 3.4em;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.025),
-        0 0 20px rgba(var(--accent),.025);
-      transition:
-        transform .3s ease,
-        box-shadow .4s ease,
-        border-color .4s ease;
-    }
-
-    .bio-box:hover {
-      transform: translateY(-2px);
-      border-color: rgba(var(--accent),.18);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.04),
-        0 8px 30px rgba(0,0,0,.25),
-        0 0 25px rgba(var(--accent),.08);
-    }
-
-    .bio-box::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 12%;
-      width: 76%;
-      height: 1px;
-      background:
-        linear-gradient(
-          90deg,
-          transparent,
-          rgba(var(--accent),.6),
-          transparent
-        );
-      opacity: .5;
-      animation: bioLine 3s ease-in-out infinite;
-    }
-
-    @keyframes bioLine {
-      50% {
-        opacity: 1;
-        width: 55%;
-        left: 22%;
-      }
-    }
-
-    .typing::after {
-      content: "";
-      display: inline-block;
-      width: 2px;
-      height: 1em;
-      margin-left: 3px;
-      vertical-align: text-bottom;
-      background: currentColor;
-      box-shadow: 0 0 7px currentColor;
-      animation: tw-blink .8s steps(1) infinite;
-    }
-
-    @keyframes tw-blink {
-      50% {
-        opacity: 0;
-      }
-    }
-
-    .links {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-      margin-top: 23px;
-    }
-
-    .link-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 13px;
-      background: var(--dark);
-      border: 1px solid rgba(255,255,255,.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #dbdee1;
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      transition:
-        background .3s ease,
-        color .3s ease,
-        transform .3s cubic-bezier(.16,1,.3,1),
-        box-shadow .3s ease;
-    }
-
-    .link-icon::before {
-      content: "";
-      position: absolute;
-      width: 70px;
-      height: 70px;
-      background:
-        radial-gradient(
-          circle,
-          rgba(var(--accent),.25),
-          transparent 65%
-        );
-      transform: scale(0);
-      transition: transform .4s ease;
-    }
-
-    .link-icon:hover::before {
-      transform: scale(2);
-    }
-
-    .link-icon svg {
-      position: relative;
-      z-index: 1;
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
-      filter: drop-shadow(0 0 3px currentColor);
-      transition: transform .3s ease;
-    }
-
-    .link-icon:hover {
-      color: #fff;
-      transform:
-        translateY(-5px)
-        scale(1.08);
-      border-color: rgba(var(--accent),.25);
-      box-shadow:
-        0 10px 25px rgba(0,0,0,.3),
-        0 0 25px rgba(var(--accent),.2);
-    }
-
-    .link-icon:hover svg {
-      transform: scale(1.15) rotate(-5deg);
-    }
-
-    .footer {
-      margin-top: 17px;
-      text-align: center;
-      font-size: .7rem;
-      color: #6d6f78;
-      text-shadow: 0 0 8px rgba(var(--accent),.1);
-    }
-
-    .friends-overlay {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(
-          circle at center,
-          rgba(var(--accent),.08),
-          transparent 45%
-        ),
-        rgba(0,0,0,.72);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      padding: 20px;
-      opacity: 0;
-      transition: opacity .3s ease;
+    @media (min-width:1800px) {
+      .terminal { left:31%; top:29%; }
+      .character { width:min(40vw,870px); }
     }
-
-    .friends-overlay.open {
-      display: flex;
-      opacity: 1;
-    }
-
-    .friends-modal {
-      position: relative;
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 18px;
-      width: 100%;
-      max-width: 360px;
-      max-height: 80vh;
-      overflow-y: auto;
-      padding: 20px;
-      transform:
-        translateY(25px)
-        scale(.92)
-        rotateX(5deg);
-      transition:
-        transform .45s cubic-bezier(.16,1,.3,1),
-        box-shadow .5s ease;
-      box-shadow:
-        0 25px 80px rgba(0,0,0,.7),
-        0 0 40px rgba(var(--accent),.08);
-      scrollbar-width: thin;
-    }
-
-    .friends-modal::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background:
-        radial-gradient(
-          circle at 50% 0%,
-          rgba(var(--accent),.12),
-          transparent 45%
-        );
-      pointer-events: none;
-    }
-
-    .friends-overlay.open .friends-modal {
-      transform:
-        translateY(0)
-        scale(1)
-        rotateX(0);
-    }
-
-    .friends-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .friends-title {
-      font-size: 1rem;
-      font-weight: 800;
-      text-shadow: 0 0 12px rgba(var(--accent),.3);
-    }
-
-    .friends-close {
-      width: 29px;
-      height: 29px;
-      border: 1px solid rgba(255,255,255,.05);
-      border-radius: 50%;
-      background: var(--dark);
-      color: #dbdee1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: .3s ease;
-    }
-
-    .friends-close:hover {
-      background: #fff;
-      color: #000;
-      transform: rotate(90deg) scale(1.1);
-      box-shadow: 0 0 18px rgba(255,255,255,.25);
-    }
-
-    .friends-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .friend-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--dark);
-      border: 1px solid rgba(255,255,255,.04);
-      border-radius: 12px;
-      padding: 10px 12px;
-      transition:
-        transform .25s ease,
-        box-shadow .25s ease,
-        border-color .25s ease;
-    }
-
-    .friend-item:hover {
-      transform: translateX(4px);
-      border-color: rgba(var(--accent),.15);
-      box-shadow:
-        0 7px 25px rgba(0,0,0,.25),
-        0 0 18px rgba(var(--accent),.06);
-    }
-
-    .friend-avatar-wrap {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      flex-shrink: 0;
-    }
-
-    .friend-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--card);
-      display: block;
-      transition:
-        transform .3s ease,
-        box-shadow .3s ease;
-    }
-
-    .friend-item:hover .friend-avatar {
-      transform: scale(1.08);
-    }
-
-    .friend-info {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .friend-name {
-      font-size: .92rem;
-      font-weight: 600;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .friend-username {
-      font-size: .78rem;
-      color: #949ba4;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .friend-badges {
-      display: flex;
-      gap: 3px;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
-    .friend-badge {
-      width: 17px;
-      height: 17px;
-      border-radius: 3px;
-      filter: drop-shadow(0 0 3px rgba(var(--accent),.3));
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 15px;
-      }
-
-      .card {
-        max-width: 380px;
-        padding-left: 20px;
-        padding-right: 20px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-      }
-
-      .card {
-        transform: none !important;
-        transition: none !important;
-      }
+    @media (max-width:900px) and (min-width:681px) {
+      .terminal { min-width:0; width:42vw; left:25%; }
+      .character { width:46vw; }
     }
+    @media (prefers-reduced-motion:reduce) { .stars,.cursor { animation:none; } .friend-avatar { transition:none; } }
   </style>
 </head>
-
-<body>
-  <div class="enter-overlay" id="enter-overlay"></div>
-
-  <div id="snow"></div>
-
-  <div class="card" id="card">
-    <div class="views" id="views">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-      </svg>
-      <span id="view-count">–</span>
+<body class="booting">
+  <div class="boot-screen" id="bootScreen" aria-label="Loading Suka World" role="status">
+    <div class="boot-inner">
+      <h1 class="boot-title">SUKA WORLD</h1>
+      <div class="boot-output" id="bootOutput" aria-live="off"></div>
+      <button class="boot-skip" id="bootSkip" type="button">SKIP INTRO</button>
     </div>
-
-    <button class="audio-toggle muted" id="audio-toggle" title="Toggle sound" aria-label="Toggle sound">
-      <svg id="audio-icon" viewBox="0 0 24 24">
-        <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-      </svg>
-    </button>
-
-    <audio
-      id="bg-audio"
-      src="https://raw.githubusercontent.com/paygates/bio/fe846f8cad16064f2c7c6b55f9d6764ed5350bef/suka.mp3"
-      loop
-      preload="auto">
-    </audio>
-
-    <div class="avatar-wrap" id="avatar-wrap" title="See friends">
-      <img class="avatar" id="avatar" src="" alt="Avatar" crossorigin="anonymous">
-      <div class="status-dot offline" id="status"></div>
-    </div>
-
-    <div class="username" id="username">Loading…</div>
-    <div class="handle" id="handle">@…</div>
-    <div class="badges" id="badges"></div>
-
-    <div class="bio-label">About Me</div>
-    <div class="bio-box" id="bio"></div>
-
-    <div class="links">
-      <a
-        class="link-icon"
-        href="https://t.me/onthaal"
-        target="_blank"
-        rel="noopener"
-        title="Telegram">
-        <svg viewBox="0 0 24 24">
-          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-        </svg>
-      </a>
-
-      <a
-        class="link-icon"
-        href="mailto:support@suka.rest"
-        title="Email">
-        <svg viewBox="0 0 24 24">
-          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-        </svg>
-      </a>
-    </div>
-
-    <div class="footer" id="footer"></div>
   </div>
-
-  <div class="friends-overlay" id="friends-overlay">
-    <div class="friends-modal" id="friends-modal">
-      <div class="friends-header">
-        <div class="friends-title">Friends</div>
-        <button class="friends-close" id="friends-close" aria-label="Close">✕</button>
-      </div>
-
-      <div class="friends-list" id="friends-list">
-        <div style="color:#949ba4;font-size:.85rem;text-align:center;padding:12px 0;">
-          Loading…
+  <div class="stars" aria-hidden="true"></div>
+  <div class="stage">
+    <header class="site-header">
+      <a class="brand" href="#home">✦ SUKA WORLD</a>
+      <button class="theme" id="theme" type="button">CHANGE MOOD</button>
+    </header>
+    <nav class="friends" id="friends" aria-label="Friends on Discord"></nav>
+    <main>
+      <section class="terminal" aria-label="Terminal window">
+        <div class="terminal-bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>suka.rest — 80x24</span>
+          <span aria-hidden="true">×</span>
         </div>
-      </div>
-    </div>
+        <div class="terminal-content" id="terminalText"></div>
+      </section>
+      <img class="character" src="SUKA.gif" alt="Animated anime character" draggable="false">
+    </main>
+    <div class="status">SUKA WORLD · SYSTEM ONLINE</div>
   </div>
-
+  <section class="music" aria-label="Music player">
+    <div class="track">
+      <div class="cover" aria-hidden="true"></div>
+      <div class="track-meta"><div class="track-name" id="track">suka playlist (beta)</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
+    </div>
+    <div class="controls">
+      <label for="file" title="Play your own audio instead" tabindex="0" role="button" aria-label="Select audio file">＋</label>
+      <input id="file" type="file" accept="audio/*" hidden>
+      <button type="button" id="back" title="Restart audio">↶</button>
+      <button type="button" id="play" title="Play or pause audio">▶</button>
+      <span class="clock" id="clock">0:00</span>
+    </div>
+    <input class="seek" id="seek" type="range" min="0" max="100" value="0" aria-label="Seek through audio">
+    <audio id="audio" src="suka.mp3" loop preload="auto"></audio>
+  </section>
+  <script src="friends.js"></script>
   <script>
-    const DISCORD_ID = "463360937949134852";
-
-    const BIO_TEXT = "I'm just a chill person.";
-
-    const FRIEND_IDS = [
-      "583244541113532416",
-      "1538289285327888518",
-      "1105502012935774208",
-      "1472999800831213733",
-      "829776262737690635",
-      "1371728976938139713"
-    ];
-
-    const FRIEND_PROFILE_API = "https://discord-lookup.lookupbotdc.workers.dev/search/";
-
-    const COUNTER_KEY = "suka-bio-" + DISCORD_ID;
-
-    const BADGE_MAP = [
-      { flag: 1 << 0, file: "staff.svg", name: "Discord Staff" },
-      { flag: 1 << 1, file: "partnered_server_owner.svg", name: "Partnered Server Owner" },
-      { flag: 1 << 2, file: "hypesquad_events.svg", name: "HypeSquad Events" },
-      { flag: 1 << 3, file: "bug_hunter_level_1.svg", name: "Bug Hunter Level 1" },
-      { flag: 1 << 6, file: "hypesquad_bravery.svg", name: "HypeSquad Bravery" },
-      { flag: 1 << 7, file: "hypesquad_brilliance.svg", name: "HypeSquad Brilliance" },
-      { flag: 1 << 8, file: "hypesquad_balance.svg", name: "HypeSquad Balance" },
-      { flag: 1 << 9, file: "early_supporter.svg", name: "Early Supporter" },
-      { flag: 1 << 14, file: "bug_hunter_level_2.svg", name: "Bug Hunter Level 2" },
-      { flag: 1 << 17, file: "early_verified_developer.svg", name: "Early Verified Bot Developer" },
-      { flag: 1 << 18, file: "certified_moderator.svg", name: "Moderator Programs Alumni" },
-      { flag: 1 << 22, file: "active_developer.svg", name: "Active Developer" }
-    ];
-
-    const BADGE_CDN =
-      "https://cdn.jsdelivr.net/gh/merlinfuchs/discord-badges@latest/SVG/";
-
-    let currentTheme = {
-      card: "#2b2d31",
-      darker: "#1e1f22",
-      body: "#080808",
-      accent: "#ffffff"
-    };
-
-    let hasIntroed = false;
-    let friendsLoaded = false;
-    let themeLocked = false;
-
-    const card = document.getElementById("card");
-
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-
-    let targetTransX = 0;
-    let targetTransY = 0;
-    let currentTransX = 0;
-    let currentTransY = 0;
-
-    function animateTilt() {
-      currentX += (targetX - currentX) * 0.06;
-      currentY += (targetY - currentY) * 0.06;
-      currentTransX += (targetTransX - currentTransX) * 0.06;
-      currentTransY += (targetTransY - currentTransY) * 0.06;
-
-      card.style.setProperty("--rotate-x", `${currentX}deg`);
-      card.style.setProperty("--rotate-y", `${currentY}deg`);
-      card.style.setProperty("--translate-x", `${currentTransX}px`);
-      card.style.setProperty("--translate-y", `${currentTransY}px`);
-
-      requestAnimationFrame(animateTilt);
-    }
-
-    function updateTilt(x, y) {
-      const rect = card.getBoundingClientRect();
-
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const normalizedX = (x - centerX) / (rect.width / 2);
-      const normalizedY = (y - centerY) / (rect.height / 2);
-
-      targetY = normalizedX * 8;
-      targetX = normalizedY * -8;
-
-      targetTransX = normalizedX * 6;
-      targetTransY = normalizedY * 6;
-    }
-
-    document.addEventListener("mousemove", e => {
-      updateTilt(e.clientX, e.clientY);
-    });
-
-    document.addEventListener("touchstart", e => {
-      if (e.touches && e.touches.length) {
-        updateTilt(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: true });
-
-    document.addEventListener("touchmove", e => {
-      if (e.touches && e.touches.length) {
-        updateTilt(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: true });
-
-    document.addEventListener("touchend", () => {
-      targetX = 0;
-      targetY = 0;
-      targetTransX = 0;
-      targetTransY = 0;
-    });
-
-    document.addEventListener("mouseleave", () => {
-      targetX = 0;
-      targetY = 0;
-      targetTransX = 0;
-      targetTransY = 0;
-    });
-
-    window.addEventListener("blur", () => {
-      targetX = 0;
-      targetY = 0;
-      targetTransX = 0;
-      targetTransY = 0;
-    });
-
-    animateTilt();
-
-    function createSnow() {
-      const snow = document.getElementById("snow");
-
-      for (let i = 0; i < 80; i++) {
-        const dot = document.createElement("div");
-        dot.className = "b";
-
-        const size = Math.floor(Math.random() * 10) + 2;
-        const left = Math.random() * 100;
-        const duration = Math.floor(Math.random() * 20) + 11;
-        const delay = Math.floor(Math.random() * 12);
-
-        dot.style.left = `${left}%`;
-        dot.style.width = `${size}px`;
-        dot.style.height = `${size}px`;
-        dot.style.animationDuration = `${duration}s`;
-        dot.style.animationDelay = `${delay}s`;
-
-        snow.appendChild(dot);
-      }
-    }
-
-    function getBadges(publicFlags) {
-      return BADGE_MAP.filter(
-        b => (publicFlags & b.flag) === b.flag
-      );
-    }
-
-    function avatarUrl(user) {
-      if (user.avatar_url) {
-        return user.avatar_url;
-      }
-
-      if (!user.avatar) {
-        const discriminator = user.discriminator || "0";
-
-        const idx = discriminator === "0"
-          ? Number((BigInt(user.id) >> 22n) % 6n)
-          : parseInt(discriminator) % 5;
-
-        return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
-      }
-
-      const ext = user.avatar.startsWith("a_") ? "gif" : "png";
-
-      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=256`;
-    }
-
-    function themeFromProfile(user) {
-      if (user.banner_color) {
-        const hex = user.banner_color.replace("#", "");
-
-        if (hex.length === 6) {
-          return {
-            r: parseInt(hex.slice(0, 2), 16),
-            g: parseInt(hex.slice(2, 4), 16),
-            b: parseInt(hex.slice(4, 6), 16)
-          };
-        }
-      }
-
-      if (typeof user.accent_color === "number") {
-        return {
-          r: (user.accent_color >> 16) & 255,
-          g: (user.accent_color >> 8) & 255,
-          b: user.accent_color & 255
-        };
-      }
-
-      return null;
-    }
-
-    function getDominantColor(img) {
-      try {
-        const canvas = document.createElement("canvas");
-        const size = 40;
-
-        canvas.width = size;
-        canvas.height = size;
-
-        const ctx = canvas.getContext("2d");
-
-        ctx.drawImage(img, 0, 0, size, size);
-
-        const data = ctx.getImageData(
-          0,
-          0,
-          size,
-          size
-        ).data;
-
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        let count = 0;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const brightness =
-            (data[i] + data[i + 1] + data[i + 2]) / 3;
-
-          if (brightness < 25 || brightness > 230) {
-            continue;
-          }
-
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-          count++;
-        }
-
-        if (!count) {
-          return null;
-        }
-
-        r = Math.round(r / count);
-        g = Math.round(g / count);
-        b = Math.round(b / count);
-
-        return {
-          r: Math.round(r * .35),
-          g: Math.round(g * .35),
-          b: Math.round(b * .35)
-        };
-      } catch {
-        return null;
-      }
-    }
-
-    function applyTheme(color) {
-      const { r, g, b } = color;
-
-      const cardBg = `rgb(
-        ${Math.min(255, r + 28)},
-        ${Math.min(255, g + 28)},
-        ${Math.min(255, b + 28)}
-      )`;
-
-      const darker = `rgb(${r},${g},${b})`;
-
-      const bodyBg = `rgb(
-        ${Math.max(0, r - 12)},
-        ${Math.max(0, g - 12)},
-        ${Math.max(0, b - 12)}
-      )`;
-
-      const accentR = Math.min(255, r + 100);
-      const accentG = Math.min(255, g + 100);
-      const accentB = Math.min(255, b + 100);
-
-      currentTheme = {
-        card: cardBg,
-        darker,
-        body: bodyBg,
-        accent: `rgb(${accentR},${accentG},${accentB})`
+    'use strict';
+    (() => {
+      const screen=document.getElementById('bootScreen');
+      const output=document.getElementById('bootOutput');
+      const skip=document.getElementById('bootSkip');
+      const lines=[
+        '• initializing kernel...   [OK]',
+        '• mounting filesystem...  [OK]',
+        '• loading audio modules... [OK]',
+        '• establishing secure channel...',
+        '  [OK]',
+        '• welcome.'
+      ];
+      const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let timers=[];
+      let done=false;
+      const finish=()=>{
+        if(done)return;
+        done=true;
+        timers.forEach(clearTimeout);
+        document.body.classList.remove('booting');
+        screen.classList.add('finished');
+        screen.setAttribute('aria-hidden','true');
+        window.setTimeout(()=>screen.remove(),reducedMotion?0:750);
       };
-
-      document.documentElement.style.setProperty(
-        "--accent",
-        `${accentR},${accentG},${accentB}`
-      );
-
-      document.documentElement.style.setProperty(
-        "--card",
-        cardBg
-      );
-
-      document.documentElement.style.setProperty(
-        "--dark",
-        darker
-      );
-
-      document.documentElement.style.setProperty(
-        "--bg",
-        bodyBg
-      );
-
-      document.body.style.background =
-        `radial-gradient(circle at 50% 50%, rgba(${accentR},${accentG},${accentB},.07), transparent 35%), radial-gradient(circle at 10% 20%, rgba(${accentR},${accentG},${accentB},.04), transparent 30%), ${bodyBg}`;
-
-      document.querySelectorAll(".avatar,.status-dot").forEach(el => {
-        el.style.borderColor = cardBg;
+      skip.addEventListener('click',finish);
+      lines.forEach((line,i)=>{
+        timers.push(setTimeout(()=>{
+          const row=document.createElement('div');
+          row.className='boot-line';
+          row.textContent=line;
+          output.append(row);
+        },reducedMotion?i*35:350+i*350));
       });
+      timers.push(setTimeout(finish,reducedMotion?500:2900));
+    })();
 
-      document.querySelectorAll(".bio-box,.link-icon").forEach(el => {
-        el.style.background = darker;
-      });
+    const terminal=document.getElementById('terminalText');
+    terminal.innerHTML=`<p class="faint">guest@suka.rest:~$ nmap</p>
+<p class="red">Under my control</p>
+<p class="bright">suka.rest's Nmap 7.95</p>
+<p>Starting Nmap 7.95 ( https://nmap.org )</p>
+<p>Nmap scan report for suka.rest</p>
+<p>Host is up (0.045s latency).</p>
+<p>PORT     STATE  SERVICE   VERSION</p>
+<p>22/tcp   open   ssh       OpenSSH</p>
+<p>80/tcp   open   http      nginx</p>
+<p>443/tcp  open   https     nginx</p>
+<p>3306/tcp open   mysql     MySQL</p>
+<p>6379/tcp open   redis     Redis</p>
+<p class="faint">Nmap done: 1 IP address (1 host up) scanned</p>
+<br><p class="faint">guest@suka.rest:~$ <span class="cursor">█</span></p>`;
 
-      document.getElementById("friends-modal").style.background =
-        cardBg;
+    /* ---------- friends ---------- */
+    const validId=id=>/^\d{17,22}$/.test(String(id||''));
+    const friendNav=document.getElementById('friends');
+    const CDN='https://cdn.discordapp.com';
 
-      document.querySelectorAll(".friend-item").forEach(el => {
-        el.style.background = darker;
-      });
-
-      document.querySelectorAll(".friends-close").forEach(el => {
-        el.style.background = darker;
-      });
-
-      document.querySelectorAll(".friend-avatar").forEach(el => {
-        el.style.background = cardBg;
-      });
-
-      themeLocked = true;
+    function loadImage(url,onLoad) {
+      if(!url) return;
+      const img=document.createElement('img');
+      img.alt=''; img.loading='lazy'; img.referrerPolicy='no-referrer';
+      img.onload=()=>onLoad(img);
+      img.onerror=()=>img.remove();
+      img.src=url;
     }
-
-    function typeText(el, text, speed) {
-      return new Promise(resolve => {
-        el.textContent = "";
-        el.classList.add("typing");
-
-        let i = 0;
-
-        function tick() {
-          if (i <= text.length) {
-            el.textContent = text.slice(0, i);
-            i++;
-            setTimeout(tick, speed);
-          } else {
-            el.classList.remove("typing");
-            resolve();
-          }
-        }
-
-        tick();
-      });
+    function avatarUrl(user) {
+      if(!user?.id) return null;
+      if(user.avatar) return `${CDN}/avatars/${user.id}/${user.avatar}.${user.avatar.startsWith('a_')?'gif':'png'}?size=128`;
+      try { return `${CDN}/embed/avatars/${Number((BigInt(user.id)>>22n)%6n)}.png`; } catch(_) { return null; }
     }
-
-    async function loadViews() {
+    function decoUrl(user) {
+      const asset=user?.avatar_decoration_data?.asset;
+      return asset?`${CDN}/avatar-decoration-presets/${asset}.png?size=128&passthrough=true`:null;
+    }
+    async function getDiscordUser(id) {
       try {
-        const res = await fetch(
-          "https://countapi.mileshilliard.com/api/v1/hit/" +
-          COUNTER_KEY
-        );
-
-        const data = await res.json();
-
-        const value =
-          data.value ??
-          data.count ??
-          0;
-
-        document.getElementById("view-count").textContent =
-          Number(value).toLocaleString();
-      } catch {
-        document.getElementById("view-count").textContent = "–";
-      }
-    }
-
-    function initAudio() {
-      const audio = document.getElementById("bg-audio");
-      const toggle = document.getElementById("audio-toggle");
-      const overlay = document.getElementById("enter-overlay");
-
-      function updateIcon() {
-        toggle.classList.toggle("muted", audio.paused);
-      }
-
-      overlay.addEventListener("click", () => {
-        audio.play()
-          .then(updateIcon)
-          .catch(() => {});
-
-        overlay.classList.add("hidden");
-      }, { once: true });
-
-      toggle.addEventListener("click", e => {
-        e.stopPropagation();
-
-        if (audio.paused) {
-          audio.play()
-            .then(updateIcon)
-            .catch(() => {});
-        } else {
-          audio.pause();
-          updateIcon();
-        }
-      });
-    }
-
-    function render(data) {
-      const user = data.discord_user;
-      const status = data.discord_status || "offline";
-      const url = avatarUrl(user);
-      const avatar = document.getElementById("avatar");
-
-      if (!themeLocked) {
-        const profileTheme = themeFromProfile(user);
-
-        if (profileTheme) {
-          applyTheme(profileTheme);
-        } else {
-          avatar.onload = () => {
-            if (themeLocked) return;
-
-            const dominant =
-              getDominantColor(avatar);
-
-            applyTheme(
-              dominant || {
-                r: 20,
-                g: 20,
-                b: 24
-              }
-            );
-          };
-
-          avatar.onerror = () => {
-            if (themeLocked) return;
-
-            applyTheme({
-              r: 20,
-              g: 20,
-              b: 24
-            });
-          };
-        }
-      }
-
-      avatar.src = url;
-
-      const displayName =
-        user.global_name ||
-        user.username;
-
-      document.getElementById("handle").textContent =
-        `@${user.username}`;
-
-      const statusEl =
-        document.getElementById("status");
-
-      statusEl.className =
-        "status-dot " + status;
-
-      const badgesEl =
-        document.getElementById("badges");
-
-      badgesEl.innerHTML = "";
-
-      getBadges(user.public_flags || 0)
-        .forEach(b => {
-          const img =
-            document.createElement("img");
-
-          img.src =
-            BADGE_CDN + b.file;
-
-          img.alt = b.name;
-          img.title = b.name;
-          img.className = "badge";
-
-          badgesEl.appendChild(img);
-        });
-
-      document.getElementById("username").textContent =
-        displayName;
-
-      if (!hasIntroed) {
-        hasIntroed = true;
-
-        const bioEl =
-          document.getElementById("bio");
-
-        typeText(
-          bioEl,
-          BIO_TEXT,
-          20
-        );
-
-        document.title =
-          `${displayName} • Bio`;
-      } else {
-        document.getElementById("bio").textContent =
-          BIO_TEXT;
-      }
-
-      document.getElementById("footer").textContent = "";
-    }
-
-    function showError() {
-      document.getElementById("username").textContent =
-        "Unavailable";
-
-      document.getElementById("handle").textContent = "";
-
-      document.getElementById("badges").innerHTML = "";
-
-      document.getElementById("footer").textContent = "";
-    }
-
-    async function fetchPresence() {
+        const r=await fetch(`/api/discord/${id}`,{signal:AbortSignal.timeout(3500)});
+        if(r.ok) { const u=await r.json(); if(u&&u.id) return u; }
+      } catch(_) {}
       try {
-        const res = await fetch(
-          `https://api.lanyard.rest/v1/users/${DISCORD_ID}`
-        );
-
-        const json = await res.json();
-
-        if (!json.success) {
-          showError();
-          return;
-        }
-
-        render(json.data);
-      } catch {
-        showError();
-      }
+        const r=await fetch(`https://api.lanyard.rest/v1/users/${id}`,{signal:AbortSignal.timeout(5000)});
+        if(!r.ok) return null;
+        const j=await r.json();
+        return j.success?j.data?.discord_user:null;
+      } catch(_) { return null; }
     }
+    function renderFriends() {
+      friendNav.replaceChildren();
+      const entries=Array.isArray(window.SUKA_FRIENDS)?window.SUKA_FRIENDS:[];
+      entries.forEach((person,index)=>{
+        const id=String(person.id||'').trim();
+        const hasId=validId(id);
+        const link=document.createElement('a');
+        link.className='friend';
+        if(hasId) { link.href=`https://discord.com/users/${id}`; link.target='_blank'; link.rel='noopener noreferrer'; }
+        else { link.setAttribute('aria-disabled','true'); link.title='Add a Discord user ID in friends.js'; }
 
-    async function fetchFriendProfile(id) {
-      try {
-        const res = await fetch(
-          FRIEND_PROFILE_API +
-          encodeURIComponent(id)
-        );
+        const wrap=document.createElement('span'); wrap.className='avatar-wrap';
+        const circle=document.createElement('span'); circle.className='friend-avatar';
+        const initial=document.createElement('span'); initial.className='placeholder';
+        const label=String(person.name||'').trim();
+        initial.textContent=label.charAt(0)||'F';
+        circle.append(initial); wrap.append(circle);
 
-        if (!res.ok) {
-          return {
-            id,
-            data: null
-          };
-        }
+        const name=document.createElement('span'); name.className='friend-name';
+        name.textContent=label||`friend ${index+1}`;
+        const uname=document.createElement('span'); uname.className='friend-user'; uname.textContent='@…';
+        const idEl=document.createElement('span'); idEl.className='friend-id'; idEl.textContent=id||'no id';
+        link.append(wrap,name,uname,idEl); friendNav.append(link);
 
-        const json = await res.json();
-
-        return {
-          id,
-          data: json.user || json
-        };
-      } catch {
-        return {
-          id,
-          data: null
-        };
-      }
-    }
-
-    function renderFriendBadges(user) {
-      const flags =
-        user.public_flags ||
-        user.flags ||
-        0;
-
-      return getBadges(flags)
-        .slice(0, 4)
-        .map(b => `
-          <img
-            class="friend-badge"
-            src="${BADGE_CDN + b.file}"
-            alt="${b.name}"
-            title="${b.name}"
-          >
-        `)
-        .join("");
-    }
-
-    function renderFriendsList(entries) {
-      const listEl =
-        document.getElementById("friends-list");
-
-      listEl.innerHTML = "";
-
-      entries.forEach(({ id, data }) => {
-        const item =
-          document.createElement("div");
-
-        item.className = "friend-item";
-        item.style.background =
-          currentTheme.darker;
-
-        if (!data) {
-          item.innerHTML = `
-            <div class="friend-avatar-wrap">
-              <div
-                class="friend-avatar"
-                style="display:flex;align-items:center;justify-content:center;color:#6d6f78;font-size:.7rem;"
-              >?</div>
-            </div>
-            <div class="friend-info">
-              <div class="friend-name">Unavailable</div>
-              <div class="friend-username">${id}</div>
-            </div>
-          `;
-
-          listEl.appendChild(item);
-          return;
-        }
-
-        const displayName =
-          data.global_name ||
-          data.username ||
-          "Unknown";
-
-        const username =
-          data.username ||
-          displayName;
-
-        const url =
-          avatarUrl(data);
-
-        const profileTheme =
-          themeFromProfile(data);
-
-        item.innerHTML = `
-          <div class="friend-avatar-wrap">
-            <img
-              class="friend-avatar"
-              src="${url}"
-              alt="${escapeHtml(displayName)}"
-            >
-          </div>
-
-          <div class="friend-info">
-            <div class="friend-name">
-              ${escapeHtml(displayName)}
-            </div>
-
-            <div class="friend-username">
-              @${escapeHtml(username)}
-            </div>
-          </div>
-
-          <div class="friend-badges">
-            ${renderFriendBadges(data)}
-          </div>
-        `;
-
-        const friendAvatar =
-          item.querySelector(".friend-avatar");
-
-        friendAvatar.style.background =
-          currentTheme.card;
-
-        if (profileTheme) {
-          const { r, g, b } =
-            profileTheme;
-
-          friendAvatar.style.boxShadow =
-            `0 0 0 2px rgba(${r},${g},${b},.35), 0 0 15px rgba(${r},${g},${b},.12)`;
-        }
-
-        listEl.appendChild(item);
+        if(person.avatar) loadImage(String(person.avatar),img=>circle.replaceChildren(img));
+        if(hasId) {
+          getDiscordUser(id).then(user=>{
+            if(!user) { uname.textContent=''; return; }
+            if(!person.avatar) loadImage(avatarUrl(user),img=>circle.replaceChildren(img));
+            const deco=decoUrl(user);
+            if(deco) loadImage(deco,img=>{ img.className='avatar-deco'; wrap.append(img); });
+            const handle=user.username||'';
+            uname.textContent=handle?`@${handle}`:'';
+            if(!label) name.textContent=user.global_name||handle||name.textContent;
+            link.title=`View ${user.global_name||handle||'friend'} on Discord`;
+          });
+        } else uname.textContent='';
       });
     }
+    renderFriends();
+    document.getElementById('theme').addEventListener('click',()=>document.body.classList.toggle('soft'));
 
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+    const audio=document.getElementById('audio'),file=document.getElementById('file'),play=document.getElementById('play'),seek=document.getElementById('seek');
+    const trackName=document.getElementById('track'),trackStatus=document.getElementById('trackStatus');
+    let objectUrl=null;
 
-    async function loadFriends() {
-      if (friendsLoaded) return;
+    const startOnFirstInteraction=()=>{
+      if(audio.paused && !audio.error) audio.play().catch(()=>{});
+      ['pointerdown','keydown','touchstart'].forEach(e=>window.removeEventListener(e,startOnFirstInteraction));
+    };
+    ['pointerdown','keydown','touchstart'].forEach(e=>window.addEventListener(e,startOnFirstInteraction,{passive:true}));
+    audio.play().catch(()=>{});
 
-      friendsLoaded = true;
-
-      const results =
-        await Promise.all(
-          FRIEND_IDS.map(fetchFriendProfile)
-        );
-
-      renderFriendsList(results);
-    }
-
-    function openFriendsModal() {
-      const overlay =
-        document.getElementById("friends-overlay");
-
-      overlay.classList.add("open");
-
-      document.getElementById(
-        "friends-modal"
-      ).style.background =
-        currentTheme.card;
-
-      loadFriends();
-    }
-
-    function closeFriendsModal() {
-      document
-        .getElementById("friends-overlay")
-        .classList.remove("open");
-    }
-
-    document
-      .getElementById("avatar-wrap")
-      .addEventListener("click", e => {
-        e.stopPropagation();
-        openFriendsModal();
-      });
-
-    document
-      .getElementById("friends-close")
-      .addEventListener(
-        "click",
-        closeFriendsModal
-      );
-
-    document
-      .getElementById("friends-overlay")
-      .addEventListener(
-        "click",
-        e => {
-          if (
-            e.target.id ===
-            "friends-overlay"
-          ) {
-            closeFriendsModal();
-          }
-        }
-      );
-
-    document.addEventListener(
-      "keydown",
-      e => {
-        if (e.key === "Escape") {
-          closeFriendsModal();
-        }
-      }
-    );
-
-    createSnow();
-    loadViews();
-    initAudio();
-    fetchPresence();
-
-    setInterval(
-      fetchPresence,
-      30000
-    );
+    audio.addEventListener('error',()=>{ if(!objectUrl) trackStatus.textContent='suka.mp3 NOT FOUND'; });
+    file.addEventListener('change',()=>{
+      const selected=file.files?.[0]; if(!selected)return;
+      if(objectUrl)URL.revokeObjectURL(objectUrl);
+      objectUrl=URL.createObjectURL(selected); audio.src=objectUrl;
+      trackName.textContent=selected.name;
+      audio.play().catch(()=>{trackStatus.textContent='PRESS PLAY';});
+    });
+    play.addEventListener('click',()=>{ if(audio.paused) audio.play().catch(()=>{}); else audio.pause(); });
+    document.getElementById('back').addEventListener('click',()=>{audio.currentTime=0;});
+    audio.addEventListener('play',()=>{play.textContent='Ⅱ';trackStatus.textContent='PLAYING';});
+    audio.addEventListener('pause',()=>{play.textContent='▶';trackStatus.textContent='PAUSED';});
+    audio.addEventListener('timeupdate',()=>{
+      seek.value=audio.duration?audio.currentTime/audio.duration*100:0;
+      document.getElementById('clock').textContent=Math.floor(audio.currentTime/60)+':'+String(Math.floor(audio.currentTime%60)).padStart(2,'0');
+    });
+    seek.addEventListener('input',()=>{if(audio.duration)audio.currentTime=audio.duration*Number(seek.value)/100;});
+    document.querySelector('label[for="file"]').addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' '){event.preventDefault();file.click();}
+    });
   </script>
 </body>
 </html>
