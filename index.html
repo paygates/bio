@@ -79,6 +79,11 @@
     .controls button:hover,.controls label:hover { color:white; }
     .clock { font:10px monospace; color:#929292; }
     .seek { display:block; width:100%; height:3px; accent-color:#a5a5a5; margin:7px 0 0; cursor:pointer; }
+    .playlist { max-height:120px; overflow:auto; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #292929; scrollbar-width:thin; scrollbar-color:#333 transparent; }
+    .playlist button { display:block; width:100%; text-align:left; background:transparent; border:0; color:#888; font:inherit; padding:3px 2px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .playlist button:hover { color:#ddd; }
+    .playlist button.active { color:#fff; text-shadow:0 0 8px #ffffff80; }
+    .playlist button.active::before { content:"▸ "; }
     .soft { --base:#0a0810; --accent:#b77898; }
     .soft .terminal { border-color:#523647; }
     .soft .brand { color:#e0bccc; }
@@ -120,7 +125,7 @@
       .character { width:46vw; }
     }
     @media (prefers-reduced-motion:reduce) { .stars,.cursor { animation:none; } .friend-avatar { transition:none; } }
-
+  
     :root { --glow:#ffffff; }
     .soft { --glow:#f6d3e3; }
     .prompt-row { display:flex; align-items:baseline; cursor:text; }
@@ -166,21 +171,25 @@
     <div class="status">SUKA WORLD · SYSTEM ONLINE</div>
   </div>
   <section class="music" aria-label="Music player">
+    <div class="playlist" id="playlist" hidden></div>
     <div class="track">
       <div class="cover" aria-hidden="true"></div>
-      <div class="track-meta"><div class="track-name" id="track">suka.mp3</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
+      <div class="track-meta"><div class="track-name" id="track">suka</div><div class="sub" id="trackStatus">PRESS PLAY</div></div>
     </div>
     <div class="controls">
-      <label for="file" title="Play your own audio instead" tabindex="0" role="button" aria-label="Select audio file">＋</label>
+      <label for="file" title="Add your own audio to the playlist" tabindex="0" role="button" aria-label="Add audio file">＋</label>
       <input id="file" type="file" accept="audio/*" hidden>
-      <button type="button" id="back" title="Restart audio">↶</button>
-      <button type="button" id="play" title="Play or pause audio">▶</button>
+      <button type="button" id="list" title="Show playlist" aria-label="Toggle playlist">☰</button>
+      <button type="button" id="prev" title="Previous (or restart)" aria-label="Previous track">⏮</button>
+      <button type="button" id="play" title="Play or pause" aria-label="Play or pause">▶</button>
+      <button type="button" id="next" title="Next track" aria-label="Next track">⏭</button>
       <span class="clock" id="clock">0:00</span>
     </div>
     <input class="seek" id="seek" type="range" min="0" max="100" value="0" aria-label="Seek through audio">
-    <audio id="audio" src="suka.mp3" loop preload="auto"></audio>
+    <audio id="audio" preload="auto"></audio>
   </section>
   <script src="friends.js"></script>
+  <script src="playlist.js"></script>
   <script>
     'use strict';
     (() => {
@@ -203,6 +212,7 @@
         done=true;
         timers.forEach(clearTimeout);
         document.body.classList.remove('booting');
+        if(window.startMusic) window.startMusic();
         screen.classList.add('finished');
         screen.setAttribute('aria-hidden','true');
         window.setTimeout(()=>screen.remove(),reducedMotion?0:750);
@@ -269,7 +279,7 @@
       const [cmd,...rest]=raw.split(/\s+/); const arg=rest.join(' ');
       const say=(lines,cls)=>lines.forEach(l=>print(l,cls));
       switch(cmd.toLowerCase()) {
-        case 'help': say(['commands:','  help       this list','  nmap       scan suka.rest','  whoami     who you are','  ls / cat   look around','  friends    the people I like','  music      play | pause | restart | status','  mood       change the mood','  neofetch   system info','  date       current time','  echo       repeat after me','  clear      wipe the screen'],'bright'); break;
+        case 'help': say(['commands:','  help       this list','  nmap       scan suka.rest','  whoami     who you are','  ls / cat   look around','  friends    the people I like','  music      play | pause | next | prev | list | status','  mood       change the mood','  neofetch   system info','  date       current time','  echo       repeat after me','  clear      wipe the screen'],'bright'); break;
         case 'nmap': reveal(NMAP); break;
         case 'whoami': say(['guest']); break;
         case 'ls': say(['about.txt  friends.txt  secret.txt']); break;
@@ -295,8 +305,11 @@
           if(sub==='play') { a.play().catch(()=>{}); say(['playing.']); }
           else if(sub==='pause') { a.pause(); say(['paused.']); }
           else if(sub==='restart') { a.currentTime=0; a.play().catch(()=>{}); say(['restarted.']); }
+          else if(sub==='next') { next(); say(['next track.']); }
+          else if(sub==='prev') { prev(); say(['previous track.']); }
+          else if(sub==='list') say(playlist.map((t,i)=>`${i===cur?'▸':' '} ${i+1}. ${esc(t.title)}`));
           else if(sub==='status'||!sub) say([`now: ${esc(document.getElementById('track').textContent)} (${a.paused?'paused':'playing'})`]);
-          else say(['usage: music play | pause | restart | status']);
+          else say(['usage: music play | pause | next | prev | list | restart | status']);
           break; }
         default: say([`${esc(cmd)}: command not found. try <span class="bright">help</span>`]);
       }
@@ -358,8 +371,7 @@
         const label=String(person.name||'').trim();
         const link=document.createElement('a');
         link.className='friend';
-        if(hasId) { link.href=`https://discord.dog/${id}`; link.target='_blank'; link.rel='noopener noreferrer'; }
-        else { link.setAttribute('aria-disabled','true'); link.title='Add a Discord user ID in friends.js'; }
+        link.setAttribute('aria-disabled','true'); if(!hasId) link.title='Add a Discord user ID in friends.js';
 
         const wrap=document.createElement('span'); wrap.className='avatar-wrap';
         const circle=document.createElement('span'); circle.className='friend-avatar';
@@ -375,18 +387,19 @@
         link.append(wrap,name,uname,idEl); friendNav.append(link);
 
         const show=img=>circle.replaceChildren(img);
-        if(person.avatar) loadImage(String(person.avatar),show);
+        let fetched=null, overrideOk=false;
+        if(person.avatar) loadImage(String(person.avatar),img=>{ overrideOk=true; show(img); },()=>{ if(fetched?.avatar) loadImage(fetched.avatar,show); });
         else if(hasId) loadImage(defaultAvatar(id),show);
         if(!hasId) return;
 
         getDiscordUser(id).then(user=>{
           if(!user) { uname.textContent=''; return; }
-          if(!person.avatar&&user.avatar) loadImage(user.avatar,show);
+          fetched=user; if(user.avatar&&!overrideOk) loadImage(user.avatar,show);
           if(user.deco) loadImage(user.deco,img=>{ img.className='avatar-deco'; wrap.append(img); });
           if(user.status) dot.className='status-dot '+user.status;
           uname.textContent=user.username?`@${user.username}`:'';
           if(!label) name.textContent=user.global_name||user.username||name.textContent;
-          link.title=person.note||`View ${user.global_name||user.username||'friend'} on Discord.dog`;
+          link.title=person.note||user.global_name||user.username||'';
         });
       });
     }
@@ -394,28 +407,54 @@
     document.getElementById('theme').addEventListener('click',()=>document.body.classList.toggle('soft'));
 
     const audio=document.getElementById('audio'),file=document.getElementById('file'),play=document.getElementById('play'),seek=document.getElementById('seek');
-    const trackName=document.getElementById('track'),trackStatus=document.getElementById('trackStatus');
-    let objectUrl=null;
+    const trackName=document.getElementById('track'),trackStatus=document.getElementById('trackStatus'),listEl=document.getElementById('playlist');
+    const playlist=(Array.isArray(window.SUKA_PLAYLIST)&&window.SUKA_PLAYLIST.length?window.SUKA_PLAYLIST:[{title:'suka',src:'suka.mp3'}])
+      .map(t=>({title:String(t.title||t.src),src:String(t.src)}));
+    let cur=0, errors=0, userPaused=false;
 
-    const startOnFirstInteraction=()=>{
-      if(audio.paused && !audio.error) audio.play().catch(()=>{});
-      ['pointerdown','keydown','touchstart'].forEach(e=>window.removeEventListener(e,startOnFirstInteraction));
-    };
-    ['pointerdown','keydown','touchstart'].forEach(e=>window.addEventListener(e,startOnFirstInteraction,{passive:true}));
+    function renderList() {
+      listEl.replaceChildren();
+      playlist.forEach((t,i)=>{
+        const b=document.createElement('button'); b.type='button'; b.textContent=t.title;
+        if(i===cur) b.className='active';
+        b.addEventListener('click',()=>load(i,true));
+        listEl.append(b);
+      });
+    }
+    function load(i,autoplay) {
+      cur=(i+playlist.length)%playlist.length;
+      const t=playlist[cur];
+      audio.src=t.src; trackName.textContent=t.title; trackStatus.textContent='LOADING'; userPaused=false;
+      renderList();
+      if(autoplay) audio.play().catch(()=>{trackStatus.textContent='PRESS PLAY';});
+    }
+    const next=()=>load(cur+1,true);
+    const prev=()=>{ if(audio.currentTime>3) audio.currentTime=0; else load(cur-1,true); };
+
+    window.startMusic=()=>{ if(audio.paused&&!userPaused&&!audio.error) audio.play().catch(()=>{}); };
+    const firstInteraction=()=>{ window.startMusic(); if(!audio.paused) ['pointerdown','keydown','touchstart'].forEach(e=>window.removeEventListener(e,firstInteraction)); };
+    ['pointerdown','keydown','touchstart'].forEach(e=>window.addEventListener(e,firstInteraction,{passive:true}));
+
+    load(0,false);
     audio.play().catch(()=>{});
 
-    audio.addEventListener('error',()=>{ if(!objectUrl) trackStatus.textContent='suka.mp3 NOT FOUND'; });
+    audio.addEventListener('ended',next);
+    audio.addEventListener('error',()=>{
+      trackStatus.textContent=playlist[cur].src.startsWith('blob:')?'ERROR':playlist[cur].src+' NOT FOUND';
+      if(playlist.length>1 && ++errors<playlist.length) setTimeout(next,1500);
+    });
+    audio.addEventListener('playing',()=>{ errors=0; });
     file.addEventListener('change',()=>{
       const selected=file.files?.[0]; if(!selected)return;
-      if(objectUrl)URL.revokeObjectURL(objectUrl);
-      objectUrl=URL.createObjectURL(selected); audio.src=objectUrl;
-      trackName.textContent=selected.name;
-      audio.play().catch(()=>{trackStatus.textContent='PRESS PLAY';});
+      playlist.push({title:selected.name,src:URL.createObjectURL(selected)});
+      load(playlist.length-1,true); file.value='';
     });
-    play.addEventListener('click',()=>{ if(audio.paused) audio.play().catch(()=>{}); else audio.pause(); });
-    document.getElementById('back').addEventListener('click',()=>{audio.currentTime=0;});
+    play.addEventListener('click',()=>{ if(audio.paused) { userPaused=false; audio.play().catch(()=>{}); } else { userPaused=true; audio.pause(); } });
+    document.getElementById('next').addEventListener('click',next);
+    document.getElementById('prev').addEventListener('click',prev);
+    document.getElementById('list').addEventListener('click',()=>{ listEl.hidden=!listEl.hidden; });
     audio.addEventListener('play',()=>{play.textContent='Ⅱ';trackStatus.textContent='PLAYING';});
-    audio.addEventListener('pause',()=>{play.textContent='▶';trackStatus.textContent='PAUSED';});
+    audio.addEventListener('pause',()=>{play.textContent='▶';if(!audio.ended)trackStatus.textContent='PAUSED';});
     audio.addEventListener('timeupdate',()=>{
       seek.value=audio.duration?audio.currentTime/audio.duration*100:0;
       document.getElementById('clock').textContent=Math.floor(audio.currentTime/60)+':'+String(Math.floor(audio.currentTime%60)).padStart(2,'0');
