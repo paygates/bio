@@ -258,7 +258,7 @@
     };
     const friendLines=()=>{
       const list=Array.isArray(window.SUKA_FRIENDS)?window.SUKA_FRIENDS:[];
-      return list.length?list.map(f=>`${esc(f.name||'friend')}  <span class="faint">${esc(f.id||'')}</span>`):['no friends yet :('];
+      return list.length?list.map(f=>`${esc(f.name||'friend')}  <span class="faint">${esc(f.id||'')}${f.note?' — '+esc(f.note):''}</span>`):['no friends yet :('];
     };
     const COMMANDS=['help','nmap','whoami','ls','cat','friends','date','echo','clear','music','mood','neofetch','uname','ping','history','sudo','exit'];
 
@@ -358,7 +358,7 @@
         const label=String(person.name||'').trim();
         const link=document.createElement('a');
         link.className='friend';
-        if(hasId) { link.href=`https://discord.com/users/${id}`; link.target='_blank'; link.rel='noopener noreferrer'; }
+        if(hasId) { link.href=`https://discord.dog/${id}`; link.target='_blank'; link.rel='noopener noreferrer'; }
         else { link.setAttribute('aria-disabled','true'); link.title='Add a Discord user ID in friends.js'; }
 
         const wrap=document.createElement('span'); wrap.className='avatar-wrap';
@@ -386,7 +386,7 @@
           if(user.status) dot.className='status-dot '+user.status;
           uname.textContent=user.username?`@${user.username}`:'';
           if(!label) name.textContent=user.global_name||user.username||name.textContent;
-          link.title=`View ${user.global_name||user.username||'friend'} on Discord`;
+          link.title=person.note||`View ${user.global_name||user.username||'friend'} on Discord.dog`;
         });
       });
     }
