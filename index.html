@@ -84,6 +84,9 @@
     .playlist button:hover { color:#ddd; }
     .playlist button.active { color:#fff; text-shadow:0 0 8px #ffffff80; }
     .playlist button.active::before { content:"▸ "; }
+    .vol { display:flex; align-items:center; gap:6px; margin-top:6px; }
+    .vol button { background:transparent; border:0; padding:0 2px; cursor:pointer; font-size:12px; line-height:1; }
+    .vol input { flex:1; min-width:0; height:3px; accent-color:#a5a5a5; cursor:pointer; margin:0; }
     .soft { --base:#0a0810; --accent:#b77898; }
     .soft .terminal { border-color:#523647; }
     .soft .brand { color:#e0bccc; }
@@ -216,6 +219,7 @@
       <span class="clock" id="clock">0:00</span>
     </div>
     <input class="seek" id="seek" type="range" min="0" max="100" value="0" aria-label="Seek through audio">
+    <div class="vol"><button type="button" id="mute" aria-label="Mute">🔊</button><input id="vol" type="range" min="0" max="100" value="70" aria-label="Volume"></div>
     <audio id="audio" preload="auto"></audio>
   </section>
   <script src="friends.js"></script>
@@ -318,9 +322,11 @@
       async(url)=>{ const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error('p'); const j=await r.json(); const s=j.status||{}; if(typeof j.contents!=='string'||(!j.contents&&!s.http_code)) throw new Error('p'); return {url:s.url||url,status:s.http_code||200,statusText:'',http:'HTTP/1.1',headers:[['content-type',s.content_type||'']],body:j.contents}; },
       ...[u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://thingproxy.freeboard.io/fetch/'+u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)].map(mk=>async(url)=>{
         const r=await fetch(mk(url),{signal:AbortSignal.timeout(15000)}); const body=await r.text();
+        // proxy's own errors (API key needed, rate limit, bad gateway) are not the site's answer
         if(r.status>=500||((r.status===401||r.status===403||r.status===429)&&body.length<500&&/api key|rate limit|forbidden|not allowed|error/i.test(body))) throw new Error('proxy refused');
         return proxyResult(url,r,body); })
     ];
+    // Works on GitHub Pages: tries a direct request first (sites that allow it), then free public CORS proxies.
     async function httpReq({url,method,headers,body,preferProxy}) {
       const direct=async()=>{ const r=await fetch(url,{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return {url:r.url,status:r.status,statusText:r.statusText,http:'HTTP/1.1',headers:[...r.headers.entries()],body:method==='HEAD'?'':await r.text()}; };
       const viaProxy=async()=>{ if(method!=='GET'&&method!=='HEAD') throw new Error('no proxy for '+method); const list=PROXIES; let e; for(const p of list) { try { const res=await p(url,method,headers,body); if(method==='HEAD') res.body=''; return res; } catch(x) { e=x; } } throw e; };
@@ -342,7 +348,7 @@
       ['whoami / id / hostname / uname','who and where'],['date / uptime / sleep / seq','time and counting'],['base64 / sha256sum','encode and hash (-d decodes)'],
       ['curl','REAL web requests (-i -I -X -H -d -o)'],['wget','REAL download into a file'],['dig / nslookup / host','REAL DNS lookups'],
       ['ping','REAL round-trip time over https'],['weather / myip','REAL lookups'],['browse / open','open the browser window'],
-      ['music','play | pause | next | prev | list | status'],['friends','list friends'],['mood','toggle theme'],['neofetch','system info'],
+      ['music','play | pause | next | prev | list | vol N | mute'],['friends','list friends'],['mood','toggle theme'],['neofetch','system info'],
       ['cowsay / fortune','fun'],['nmap / ps','(fake) scan and processes'],['sudo / exit / reboot','you know']
     ];
     const C={};
@@ -434,9 +440,11 @@
     C.music=a=>{ const au=document.getElementById('audio'), s=(a[0]||'status').toLowerCase();
       if(s==='play') { au.play().catch(()=>{}); return 'playing.\n'; } if(s==='pause') { au.pause(); return 'paused.\n'; }
       if(s==='next') { next(); return 'next track.\n'; } if(s==='prev') { prev(); return 'previous track.\n'; }
+      if(s==='vol') { const n=parseInt(a[1],10); if(isNaN(n)) throw new Err('usage: music vol <0-100>'); vol.value=Math.max(0,Math.min(100,n)); vol.dispatchEvent(new Event('input')); return 'volume '+vol.value+'%\n'; }
+      if(s==='mute') { muteBtn.click(); return userMuted?'muted.\n':'unmuted.\n'; }
       if(s==='list') return playlist.map((t,i)=>`${i===cur?'▸':' '} ${i+1}. ${t.title}`).join('\n')+'\n';
       if(s==='status') return `now: ${document.getElementById('track').textContent} (${au.paused?'paused':'playing'})\n`;
-      throw new Err('usage: music play | pause | next | prev | list | status'); };
+      throw new Err('usage: music play | pause | next | prev | list | vol <0-100> | mute | status'); };
     C.curl=async a=>{
       let url,method,headers={},body,incl=false,head=false,outFile,remote=false;
       for(let i=0;i<a.length;i++) { const s=a[i];
@@ -545,7 +553,7 @@
       }
     });
     box.addEventListener('click',e=>{ if(!getSelection().toString()&&!e.target.closest('.terminal-bar')) input.focus({preventScroll:true}); });
-    println('\x1b[1mSukaOS 7.95\x1b[0m — type \x1b[1mhelp\x1b[0m. curl, dig, ping, weather and browse are real.');
+    println('\x1b[1mSukaOS 7.95\x1b[0m (build 4) — type \x1b[1mhelp\x1b[0m. curl, dig, ping, weather and browse are real.');
     runLine('nmap');
 
     const validId=id=>/^\d{17,22}$/.test(String(id||''));
@@ -558,6 +566,7 @@
     const decoFrom=asset=>asset?`${CDN}/avatar-decoration-presets/${asset}.png?size=128&passthrough=true`:null;
     const timeout=(url,ms)=>fetch(url,{signal:AbortSignal.timeout(ms)}).then(r=>r.ok?r.json():null).catch(()=>null);
 
+    // Each source is normalised to {username, global_name, avatar, deco, status}
     const sources={
       own: async id=>{ const u=await timeout(`/api/discord/${id}`,3500); if(!u||!u.id) return null;
         return {username:u.username,global_name:u.global_name,avatar:hashAvatar(u.id,u.avatar),deco:decoFrom(u.avatar_decoration_data?.asset)}; },
@@ -711,12 +720,23 @@
     const next=()=>load(cur+1,true);
     const prev=()=>{ if(audio.currentTime>3) audio.currentTime=0; else load(cur-1,true); };
 
-    window.startMusic=()=>{ if(audio.paused&&!userPaused&&!audio.error) audio.play().catch(()=>{}); };
-    const firstInteraction=()=>{ window.startMusic(); if(!audio.paused) ['pointerdown','keydown','touchstart'].forEach(e=>window.removeEventListener(e,firstInteraction)); };
-    ['pointerdown','keydown','touchstart'].forEach(e=>window.addEventListener(e,firstInteraction,{passive:true}));
+    let userMuted=false, volume=0.7;
+    try { const v=localStorage.getItem('suka:vol'); if(v!==null&&!isNaN(+v)) volume=Math.min(1,Math.max(0,+v)); } catch(_) {}
+    const vol=document.getElementById('vol'), muteBtn=document.getElementById('mute');
+    const applyVol=()=>{ audio.volume=volume; vol.value=Math.round(volume*100); muteBtn.textContent=(userMuted||volume===0)?'🔇':'🔊'; };
+    vol.addEventListener('input',()=>{ volume=vol.value/100; if(volume>0) userMuted=false; audio.muted=userMuted; applyVol(); try { localStorage.setItem('suka:vol',String(volume)); } catch(_) {} });
+    muteBtn.addEventListener('click',()=>{ userMuted=!userMuted; audio.muted=userMuted; applyVol(); });
+    applyVol();
+
+    const EVTS=['pointerdown','keydown','touchend','click'];
+    window.startMusic=()=>{ if(userPaused||audio.error) return; audio.muted=userMuted; audio.play().catch(()=>{}); };
+    const firstInteraction=()=>window.startMusic();
+    EVTS.forEach(e=>window.addEventListener(e,firstInteraction,{passive:true}));
+    const settle=()=>{ if(!audio.paused&&!audio.muted) EVTS.forEach(e=>window.removeEventListener(e,firstInteraction)); };
+    audio.addEventListener('playing',settle); audio.addEventListener('volumechange',settle);
 
     load(0,false);
-    audio.play().catch(()=>{});
+    audio.muted=true; audio.play().catch(()=>{});
 
     audio.addEventListener('ended',next);
     audio.addEventListener('error',()=>{
@@ -733,8 +753,8 @@
     document.getElementById('next').addEventListener('click',next);
     document.getElementById('prev').addEventListener('click',prev);
     document.getElementById('list').addEventListener('click',()=>{ listEl.hidden=!listEl.hidden; });
-    audio.addEventListener('play',()=>{play.textContent='Ⅱ';trackStatus.textContent='PLAYING';});
-    audio.addEventListener('pause',()=>{play.textContent='▶';if(!audio.ended)trackStatus.textContent='PAUSED';});
+    const showState=()=>{ play.textContent=audio.paused?'▶':'Ⅱ'; trackStatus.textContent=audio.paused?(userPaused?'PAUSED':'TAP ANYWHERE TO PLAY'):(audio.muted&&!userMuted?'STARTING…':'PLAYING'); };
+    audio.addEventListener('play',showState); audio.addEventListener('pause',()=>{ if(!audio.ended) showState(); }); audio.addEventListener('volumechange',showState);
     audio.addEventListener('timeupdate',()=>{
       seek.value=audio.duration?audio.currentTime/audio.duration*100:0;
       document.getElementById('clock').textContent=Math.floor(audio.currentTime/60)+':'+String(Math.floor(audio.currentTime%60)).padStart(2,'0');
