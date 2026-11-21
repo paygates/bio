@@ -313,9 +313,16 @@
     const globRe=g=>new RegExp('^'+g.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$');
     const clone=n=>JSON.parse(JSON.stringify(n));
 
+    const proxyResult=(url,r,body)=>({url,status:r.status,statusText:r.statusText||'',http:'HTTP/1.1',headers:[...r.headers.entries()],body});
+    const PROXIES=[
+      async(url)=>{ const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error('p1'); const j=await r.json(); const s=j.status||{}; if(typeof j.contents!=='string'||(!j.contents&&!s.http_code)) throw new Error('p1'); return {url:s.url||url,status:s.http_code||200,statusText:'',http:'HTTP/1.1',headers:[['content-type',s.content_type||'']],body:j.contents}; },
+      async(url,method,headers,body)=>{ const r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(url),{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return proxyResult(url,r,await r.text()); },
+      async(url)=>{ const r=await fetch('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok&&r.status>=500) throw new Error('p3'); return proxyResult(url,r,await r.text()); }
+    ];
+    // Works on GitHub Pages: tries a direct request first (sites that allow it), then free public CORS proxies.
     async function httpReq({url,method,headers,body,preferProxy}) {
-      const viaProxy=async()=>{ const r=await fetch('/api/curl',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,method,headers,body})}); if(!r.ok) throw new Error('proxy '+r.status); return r.json(); };
       const direct=async()=>{ const r=await fetch(url,{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return {url:r.url,status:r.status,statusText:r.statusText,http:'HTTP/1.1',headers:[...r.headers.entries()],body:method==='HEAD'?'':await r.text()}; };
+      const viaProxy=async()=>{ const list=(method==='GET'||method==='HEAD')?PROXIES:[PROXIES[1]]; let e; for(const p of list) { try { const res=await p(url,method,headers,body); if(method==='HEAD') res.body=''; return res; } catch(x) { e=x; } } throw e; };
       let last; for(const f of (preferProxy?[viaProxy,direct]:[direct,viaProxy])) { try { return await f(); } catch(e) { last=e; } }
       throw last;
     }
@@ -602,7 +609,7 @@
         const show=img=>circle.replaceChildren(img);
         let fetched=null, overrideOk=false;
         if(person.avatar) loadImage(String(person.avatar),img=>{ overrideOk=true; show(img); },()=>{ if(fetched?.avatar) loadImage(fetched.avatar,show); });
-        else if(hasId) loadImage(defaultAvatar(id),show);   // instant placeholder pfp, replaced below
+        else if(hasId) loadImage(defaultAvatar(id),show);
         if(!hasId) return;
 
         getDiscordUser(id).then(user=>{
@@ -650,15 +657,28 @@
       if(/^[\w-]+(\.[\w-]+)+(:\d+)?([/?#].*)?$/.test(v)) return 'https://'+v;
       return 'https://html.duckduckgo.com/html/?q='+encodeURIComponent(v);
     }
-    function browse(v,push=true) {
+    let bToken=0;
+    const BR_SCRIPT="(function(){var B=__BASE__;function P(u){parent.postMessage({suka:'nav',url:u},'*')}document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var raw=a.getAttribute('href')||'';if(raw.charAt(0)==='#'){e.preventDefault();var t=document.getElementById(raw.slice(1));if(t)t.scrollIntoView();return}if(!/^https?:/i.test(a.href))return;e.preventDefault();P(a.href)},true);document.addEventListener('submit',function(e){var f=e.target;e.preventDefault();if((f.method||'get').toLowerCase()!=='get')return;var u=new URL(f.getAttribute('action')||B,B);new FormData(f).forEach(function(v,k){if(typeof v==='string')u.searchParams.set(k,v)});P(u.href)},true)})();";
+    function prepareHtml(html,base) {
+      const inject='<base href="'+base.replace(/"/g,'&quot;')+'"><script>'+BR_SCRIPT.replace('__BASE__',JSON.stringify(base))+'<\/script>';
+      html=html.replace(/<meta[^>]+http-equiv=["']?(content-security-policy|refresh)[^>]*>/gi,'');
+      return /<head[^>]*>/i.test(html)?html.replace(/<head[^>]*>/i,m=>m+inject):inject+html;
+    }
+    const notice=(t,m)=>`<body style="background:#050505;color:#888;font:13px monospace;padding:22px"><b style="color:#ccc">${esc(t)}</b><p>${esc(m)}</p></body>`;
+    async function browse(v,push=true) {
       const url=bNormalize(v); if(!url) return;
       browserWin.hidden=false; front(browserWin);
       if(push) { bHist=bHist.slice(0,bIdx+1); bHist.push(url); bIdx=bHist.length-1; }
-      bUrl.value=url; bStat.textContent='loading…';
-      bFrame.src='/api/browse?url='+encodeURIComponent(url);
+      bUrl.value=url; bStat.textContent='loading…'; const me=++bToken;
+      try {
+        const res=await httpReq({url,method:'GET',headers:{},preferProxy:true});
+        if(me!==bToken) return;
+        const ct=((res.headers.find(([k])=>String(k).toLowerCase()==='content-type')||[])[1]||'');
+        bFrame.srcdoc=(ct&&!/html|xml/i.test(ct))?`<body style="background:#050505;color:#aaa;font:12px monospace;padding:16px;white-space:pre-wrap">${esc(res.body.slice(0,100000))}</body>`:prepareHtml(res.body,res.url||url);
+        bStat.textContent=url;
+      } catch(_) { if(me===bToken) { bFrame.srcdoc=notice('Could not load this page','The site blocked the request, or the free public proxies are busy. Try again, or use the ↗ button to open it in a real tab.'); bStat.textContent='failed'; } }
     }
-    bFrame.addEventListener('load',()=>{ bStat.textContent=bHist[bIdx]||''; });
-    window.addEventListener('message',e=>{ if(e.source===bFrame.contentWindow&&e.data&&e.data.suka==='nav'&&typeof e.data.url==='string') browse(e.data.url); });
+        window.addEventListener('message',e=>{ if(e.source===bFrame.contentWindow&&e.data&&e.data.suka==='nav'&&typeof e.data.url==='string') browse(e.data.url); });
     bUrl.addEventListener('keydown',e=>{ if(e.key==='Enter') browse(bUrl.value); });
     document.getElementById('bBack').addEventListener('click',()=>{ if(bIdx>0) { bIdx--; browse(bHist[bIdx],false); } });
     document.getElementById('bFwd').addEventListener('click',()=>{ if(bIdx<bHist.length-1) { bIdx++; browse(bHist[bIdx],false); } });
