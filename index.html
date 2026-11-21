@@ -315,14 +315,15 @@
 
     const proxyResult=(url,r,body)=>({url,status:r.status,statusText:r.statusText||'',http:'HTTP/1.1',headers:[...r.headers.entries()],body});
     const PROXIES=[
-      async(url)=>{ const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error('p1'); const j=await r.json(); const s=j.status||{}; if(typeof j.contents!=='string'||(!j.contents&&!s.http_code)) throw new Error('p1'); return {url:s.url||url,status:s.http_code||200,statusText:'',http:'HTTP/1.1',headers:[['content-type',s.content_type||'']],body:j.contents}; },
-      async(url,method,headers,body)=>{ const r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(url),{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return proxyResult(url,r,await r.text()); },
-      async(url)=>{ const r=await fetch('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok&&r.status>=500) throw new Error('p3'); return proxyResult(url,r,await r.text()); }
+      async(url)=>{ const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error('p'); const j=await r.json(); const s=j.status||{}; if(typeof j.contents!=='string'||(!j.contents&&!s.http_code)) throw new Error('p'); return {url:s.url||url,status:s.http_code||200,statusText:'',http:'HTTP/1.1',headers:[['content-type',s.content_type||'']],body:j.contents}; },
+      ...[u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://thingproxy.freeboard.io/fetch/'+u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)].map(mk=>async(url)=>{
+        const r=await fetch(mk(url),{signal:AbortSignal.timeout(15000)}); const body=await r.text();
+        if(r.status>=500||((r.status===401||r.status===403||r.status===429)&&body.length<500&&/api key|rate limit|forbidden|not allowed|error/i.test(body))) throw new Error('proxy refused');
+        return proxyResult(url,r,body); })
     ];
-    // Works on GitHub Pages: tries a direct request first (sites that allow it), then free public CORS proxies.
     async function httpReq({url,method,headers,body,preferProxy}) {
       const direct=async()=>{ const r=await fetch(url,{method,headers,body:(method==='GET'||method==='HEAD')?undefined:body,signal:AbortSignal.timeout(15000)}); return {url:r.url,status:r.status,statusText:r.statusText,http:'HTTP/1.1',headers:[...r.headers.entries()],body:method==='HEAD'?'':await r.text()}; };
-      const viaProxy=async()=>{ const list=(method==='GET'||method==='HEAD')?PROXIES:[PROXIES[1]]; let e; for(const p of list) { try { const res=await p(url,method,headers,body); if(method==='HEAD') res.body=''; return res; } catch(x) { e=x; } } throw e; };
+      const viaProxy=async()=>{ if(method!=='GET'&&method!=='HEAD') throw new Error('no proxy for '+method); const list=PROXIES; let e; for(const p of list) { try { const res=await p(url,method,headers,body); if(method==='HEAD') res.body=''; return res; } catch(x) { e=x; } } throw e; };
       let last; for(const f of (preferProxy?[viaProxy,direct]:[direct,viaProxy])) { try { return await f(); } catch(e) { last=e; } }
       throw last;
     }
